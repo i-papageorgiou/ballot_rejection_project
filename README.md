@@ -25,8 +25,13 @@ Commission, 2016–2024 (5 waves). Public, no authentication required. See
 ```bash
 # Python (data acquisition, cleaning, panel construction, choropleth)
 python3 -m pip install -r requirements.txt
+```
 
-# R (estimation — Week 4)
+R (estimation — Week 4): `fixest`, `did`, `didimputation`, `fwildclusterboot`,
+`data.table`, `ggplot2`, `modelsummary`, `broom` are already installed and
+verified to load on this machine. If setting up fresh elsewhere:
+
+```bash
 Rscript -e 'install.packages(c("fixest","did","didimputation"))'
 Rscript -e 'install.packages("fwildclusterboot", repos=c("https://s3alfisc.r-universe.dev","https://cloud.r-project.org"))'
 ```

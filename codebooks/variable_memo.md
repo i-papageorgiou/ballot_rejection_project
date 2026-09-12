@@ -22,7 +22,11 @@ voters"): same file, §2.
 
 ## Rejection-reason breakdown (for descriptives / robustness, not the main spec)
 
-- 2016: `C5a`–`C5r` (22 reason columns, `_Other` text pairs excluded from sums)
+- 2016: `C5a`–`C5v` (22 reason columns, `_Other` text pairs excluded from sums).
+  `C4b` correlates **0.9927** with this sum and matches exactly in **91.4%** of
+  non-missing rows (vs. 0.857 for `C4a`) — confirms `C4b` is the rejected
+  total, not `C4a`. (Corrects an earlier draft of this memo, which cited
+  0.9974 / 94.3% from a partial `C5a`–`C5r` range rather than the full block.)
 - 2018/2020: `C4b`–`C4r` / `C4b`–`C4r` respectively (deadline, signature,
   witness signature, non-matching signature, no EO signature, unofficial
   envelope, ballot missing, envelope not sealed, no address, multiple

@@ -56,13 +56,13 @@ rejected-ballots field by analogy to 2018's `C4a`, but in 2016 `C4a` is
 *counted* and `C4b` is *rejected* — the reverse of 2018/2020.
 
 This was confirmed by testing which of `C4a`/`C4b` reconstructs from the
-sum of the wave's rejection-reason breakdown columns (`C5a`...`C5r`,
+sum of the wave's full rejection-reason breakdown columns (`C5a`...`C5v`,
 "Rejected: Deadline," "Rejected: Voter Signature," etc.):
 
 | Candidate | Correlation with Σ(reason cols) | Exact match rate |
 |---|---|---|
 | `C4a` | 0.857 | 0.1% |
-| **`C4b`** | **0.997** | **94.3%** |
+| **`C4b`** | **0.9927** | **91.4%** |
 
 `C4b` is the only candidate that reconstructs from its own breakdown, so it
 is the rejected total. `src/03_clean_eavs.py`'s validation gate re-runs this

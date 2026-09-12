@@ -24,7 +24,7 @@ Before planning, I verified the project's core feasibility against the live data
 
 These are specific, verified, and each one silently produces wrong numbers rather than an error.
 
-1. **2016 renumbers the outcome.** `C4b` is *rejected total*; `C4a` is *counted*. In 2018/2020 `C4a` **is** rejected total. Grabbing `C4a` uniformly yields a 2016 rejection rate near 1.0 that looks plausible enough to survive review. Confirmed empirically: 2016 `C4b` correlates 0.9974 with the sum of its `C5*` reason columns and matches exactly in 94.3% of rows.
+1. **2016 renumbers the outcome.** `C4b` is *rejected total*; `C4a` is *counted*. In 2018/2020 `C4a` **is** rejected total. Grabbing `C4a` uniformly yields a 2016 rejection rate near 1.0 that looks plausible enough to survive review. Confirmed empirically: 2016 `C4b` correlates 0.9927 with the sum of its `C5a`-`C5v` reason columns and matches exactly in 91.4% of rows (vs. 0.857 for `C4a`).
 
 2. **2016 encodes sentinels as text**, not numbers: `'-888888: Not Applicable'`, `'-999999: Data Not Available'`. Waves 2018–2024 use numeric `-88`/`-99`. Type inference makes the 2016 column `object`; arithmetic then either throws or concatenates strings.
 
@@ -51,8 +51,8 @@ Python for cleaning, R for estimation (per your selection). Two adjustments to r
 - **Choropleth stays in Python.** `geopandas` 1.1.1 is already working; the R `sf` path would require GDAL/PROJ system libraries. This removes the single riskiest install.
 - **Panel handed to R as CSV, not parquet.** Avoids installing the heavy R `arrow` package. Write `panel.parquet` for Python and `panel.csv` for R.
 
-Installed and usable now: Python `pandas` 2.1.4, `numpy`, `pyarrow`, `geopandas`, `statsmodels`, `matplotlib`, `openpyxl` (anaconda 3.11.4); R 4.5.3 with `data.table`, `ggplot2`, `modelsummary`, `broom`.
-Needs installing in R: `fixest`, `did`, `didimputation`, `fwildclusterboot`, `renv`.
+Installed and usable now: Python `pandas` 2.1.4, `numpy`, `pyarrow`, `geopandas`, `statsmodels`, `matplotlib`, `openpyxl` (anaconda 3.11.4); R 4.5.3 with `data.table`, `ggplot2`, `modelsummary`, `broom`, `fixest`, `did`, `didimputation`, `fwildclusterboot` — all verified to load as of Week 2.
+Not yet installed: `renv`.
 
 ---
 
@@ -101,34 +101,40 @@ Per handoff §10, this gates everything downstream. Cover: outcome numerator/den
 
 ## Week 2 — Cleaning and panel construction (detailed)
 
-### 2.1 `src/02_clean_eavs.py`
+### 2.1 `src/03_clean_eavs.py` — done
 
-Per-wave loader. The non-negotiable rules, each mapping to a verified trap:
+Per-wave loader plus validation gate, folded into one script (numbered `03_`
+since `02_build_crosswalk.py` already occupies `02_`; the folding also drops
+the separately-numbered validation file originally sketched below — there is
+no panel yet to validate independently, and the README's declared structure
+never listed one). Reads `codebooks/crosswalk.yaml` — including a
+`rejection_reasons` list per wave, added to that script for this step — so
+no column letter is hard-coded here. Non-negotiable rules, each mapping to a
+verified trap:
 
 - Read every wave with `encoding="latin-1"` and `dtype=str`. Read as string first, coerce second — this neutralizes traps 2 and 3 together and prevents any sentinel from entering arithmetic.
 - Coerce with `pd.to_numeric(..., errors="coerce")`, then `.mask(v < 0)`. Order matters: text sentinels become `NaN` at coercion, numeric `-88`/`-99` are caught by the mask.
 - Normalize FIPS: `.astype(str).str.strip().str.replace(r'\.0$','',regex=True).str.zfill(10)`.
-- Harmonize ID columns — 2016 uses `State` / `JurisdictionName`; 2020+ use `State_Full` / `State_Abbr` / `Jurisdiction_Name`.
-- Resolve the 3 known duplicate FIPS explicitly and log the decision.
+- Harmonize ID columns — 2016 uses `State` / `JurisdictionName`; 2020+ use `State_Full` / `State_Abbr` / `Jurisdiction_Name`. 2016 has no full state name column; it's filled from a lookup built off the union of the other four waves (no single wave covers every 2016 abbreviation).
+- Resolve the 3 known duplicate FIPS explicitly by summing counts (never rates) and flag the surviving row.
 
-Emit `data/interim/eavs_<year>.parquet`.
+Emits `data/interim/eavs_<year>.parquet`, one row per jurisdiction-year, unusable rows kept and flagged rather than dropped.
 
-### 2.2 Validation gate (`src/02b_validate.py`)
+**Validation gate**, run after cleaning in the same script. This is the step that makes the crosswalk defensible rather than asserted. Assert, per wave:
 
-This is the step that makes the crosswalk defensible rather than asserted. Assert, per wave:
+- National rejected totals reproduce **exactly**: **2016: 318,728 · 2018: 430,196 · 2020: 560,826 · 2022: 549,824 · 2024: 584,463**. Verified — these are regression-test fixtures; if a refactor changes them, something broke.
+- `rejected_total ≈ sum(reason columns)` as a band, not a point fixture: corr ≥ 0.95 and exact-match ≥ 85%. Verified per wave: corr 0.9927/0.9602/0.9745/0.9997/0.9994, exact 91.4%/94.1%/94.7%/95.5%/94.2% for 2016/2018/2020/2022/2024 (the 2016 figure corrects an earlier draft of `variable_memo.md` that cited 0.9974/94.3% from a partial `C5a`-`C5r` range rather than the full `C5a`-`C5v` block).
+- `rejection_rate ∈ [0, 1]`; count and report violations (informational — expect ≤2/wave; 2022 ran to 4, still passes as informational).
+- Usable-row share ≥ 90% per wave — verified: 90.7 / 96.2 / 97.5 / 95.3 / 94.2%.
+- Duplicate FIPS after resolution = 0 per wave — verified.
 
-- `rejected_total ≈ sum(reason columns)` within tolerance — the test that identified 2016 `C4b`. Report the match rate; expect ~94% exact for 2016.
-- `rejection_rate ∈ [0, 1]`; count and inspect violations (expect ≤2 per wave).
-- National rejected totals reproduce: **2016: 318,728 · 2018: 430,196 · 2020: 560,826 · 2022: 549,824 · 2024: 584,463**. These are regression-test fixtures — if a refactor changes them, something broke.
-- Usable-row share ≥ 90% per wave (verified: 90.7 / 96.2 / 97.5 / 95.2 / 94.2%).
+Fails loudly (non-zero exit) on violation. Writes `output/tables/validation_report.md`.
 
-Fail loudly on violation. Write results to `output/tables/validation_report.md`.
+### 2.2 `src/04_merge_controls.py` (deferred)
 
-### 2.3 `src/03_merge_controls.py`
+ACS 5-year jurisdiction covariates (median income, education, age, race, rurality) via the Census API, merged on county FIPS. Deferred: no Census API key yet, and with jurisdiction fixed effects the time-invariant county covariates drop out of the main spec anyway — this mainly buys the urban/rural heterogeneity split, which a static classification can supply if needed before Week 4. Wisconsin/Michigan/New England sub-county jurisdictions will not match a county-level ACS pull — aggregate the ACS county value onto constituent jurisdictions and **flag the row** rather than dropping it. Count and report the flagged share.
 
-ACS 5-year jurisdiction covariates (median income, education, age, race, rurality) via the Census API, merged on county FIPS. Wisconsin/Michigan/New England sub-county jurisdictions will not match a county-level ACS pull — aggregate the ACS county value onto constituent jurisdictions and **flag the row** rather than dropping it. Count and report the flagged share.
-
-### 2.4 `src/04_build_panel.py`
+### 2.3 `src/05_build_panel.py`
 
 Stack to jurisdiction-year long format. Emit `data/processed/panel.parquet` **and** `panel.csv`.
 
@@ -151,10 +157,10 @@ Produce a missingness report by state and jurisdiction size. Handoff §7 is righ
 ## Verification
 
 - **Week 1:** `python src/01_download.py` twice — second run is a no-op. All 10 files present with expected sizes.
-- **Week 2:** `python src/02b_validate.py` reproduces all five national totals exactly. This is the single strongest end-to-end check.
-- **Panel sanity:** 6,445 FIPS present in all 5 waves; median rejection rate by wave lands near 0.37 / 0.67 / 0.25 / 0.47 / 0.39% for 2016–2024. The 2020 dip should survive as a visible feature.
+- **Week 2:** `python src/03_clean_eavs.py` reproduces all five national totals exactly (verified — see `output/tables/validation_report.md`). This is the single strongest end-to-end check.
+- **Panel sanity:** median rejection rate by wave lands near 0.37 / 0.67 / 0.25 / 0.47 / 0.39% for 2016–2024 — verified against the cleaned interim files. The 2020 dip survives as a visible feature. (6,445-FIPS cross-wave linkage is a panel-level check, still pending `05_build_panel.py`.)
 - **Reproducibility:** `bash run_all.sh` from a clean clone rebuilds the panel from raw downloads.
-- **R environment:** install `fixest`, `did`, `didimputation`, `fwildclusterboot` early in Week 1, not Week 4 — verify they load before depending on them.
+- **R environment:** `fixest`, `did`, `didimputation`, `fwildclusterboot` are installed and verified to load (checked Week 2, ahead of Week 4) — no outstanding install risk here.
 
 ## Non-goals (from handoff §8)
 

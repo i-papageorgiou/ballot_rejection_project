@@ -5,27 +5,126 @@ waves:
   returned_by_voters: C1b
   counted_total: C4a
   rejected_total: C4b
+  rejection_reasons:
+  - C5a
+  - C5b
+  - C5c
+  - C5d
+  - C5e
+  - C5f
+  - C5g
+  - C5h
+  - C5i
+  - C5j
+  - C5k
+  - C5l
+  - C5m
+  - C5n
+  - C5o
+  - C5p
+  - C5q
+  - C5r
+  - C5s
+  - C5t
+  - C5u
+  - C5v
 - wave: 2018
   source: codebook_2018.xlsx (Variables sheet)
   transmitted_total: C1a
   returned_by_voters: C1b
   counted_total: C3a
   rejected_total: C4a
+  rejection_reasons:
+  - C4b
+  - C4c
+  - C4d
+  - C4e
+  - C4f
+  - C4g
+  - C4h
+  - C4i
+  - C4j
+  - C4k
+  - C4l
+  - C4m
+  - C4n
+  - C4o
+  - C4p
+  - C4q
+  - C4r
 - wave: 2020
   source: codebook_2020.xlsx (Variables sheet)
   transmitted_total: C1a
   returned_by_voters: C1b
   counted_total: C3a
   rejected_total: C4a
+  rejection_reasons:
+  - C4b
+  - C4c
+  - C4d
+  - C4e
+  - C4f
+  - C4g
+  - C4h
+  - C4i
+  - C4j
+  - C4k
+  - C4l
+  - C4m
+  - C4n
+  - C4o
+  - C4p
+  - C4q
+  - C4r
 - wave: 2022
   source: codebook_2022.xlsx (Variables sheet)
   transmitted_total: C1a
   returned_by_voters: C1b
   counted_total: C8a
   rejected_total: C9a
+  rejection_reasons:
+  - C9b
+  - C9c
+  - C9d
+  - C9e
+  - C9f
+  - C9g
+  - C9h
+  - C9i
+  - C9j
+  - C9k
+  - C9l
+  - C9m
+  - C9n
+  - C9o
+  - C9p
+  - C9q
+  - C9r
+  - C9s
+  - C9t
 - wave: 2024
   source: codebook_2024.xlsx (Variables sheet)
   transmitted_total: C1a
   returned_by_voters: C1b
   counted_total: C8a
   rejected_total: C9a
+  rejection_reasons:
+  - C9b
+  - C9c
+  - C9d
+  - C9e
+  - C9f
+  - C9g
+  - C9h
+  - C9i
+  - C9j
+  - C9k
+  - C9l
+  - C9m
+  - C9n
+  - C9o
+  - C9p
+  - C9q
+  - C9r
+  - C9s
+  - C9t
