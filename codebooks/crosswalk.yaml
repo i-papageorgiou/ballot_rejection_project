@@ -1,0 +1,31 @@
+waves:
+- wave: 2016
+  source: empirically verified (see eavs_variable_crosswalk.md)
+  transmitted_total: C1a
+  returned_by_voters: C1b
+  counted_total: C4a
+  rejected_total: C4b
+- wave: 2018
+  source: codebook_2018.xlsx (Variables sheet)
+  transmitted_total: C1a
+  returned_by_voters: C1b
+  counted_total: C3a
+  rejected_total: C4a
+- wave: 2020
+  source: codebook_2020.xlsx (Variables sheet)
+  transmitted_total: C1a
+  returned_by_voters: C1b
+  counted_total: C3a
+  rejected_total: C4a
+- wave: 2022
+  source: codebook_2022.xlsx (Variables sheet)
+  transmitted_total: C1a
+  returned_by_voters: C1b
+  counted_total: C8a
+  rejected_total: C9a
+- wave: 2024
+  source: codebook_2024.xlsx (Variables sheet)
+  transmitted_total: C1a
+  returned_by_voters: C1b
+  counted_total: C8a
+  rejected_total: C9a

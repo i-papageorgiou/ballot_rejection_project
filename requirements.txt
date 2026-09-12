@@ -1,0 +1,16 @@
+# Python side: acquisition, cleaning, panel construction, and the
+# county-level choropleth. Estimation (Week 4) runs in R — see
+# codebooks/eavs_variable_crosswalk.md and PROJECT_PLAN.md for the split
+# rationale (geopandas already works here; R's sf needs system GDAL/PROJ).
+#
+# Tested against anaconda Python 3.11.4 on this machine.
+
+pandas==2.1.4
+numpy==1.24.3
+pyarrow==11.0.0
+geopandas==1.1.1
+statsmodels==0.14.0
+matplotlib==3.7.1
+openpyxl==3.0.10
+pyyaml
+requests
