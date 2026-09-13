@@ -4,7 +4,7 @@
 
 The working directory contains exactly one file: `Project_Handoff_Ballot_Rejection_Analysis.md`. Nothing has been built yet.
 
-The handoff document specifies a five-week, part-time portfolio project: *Administrative Burden at the Ballot Box: State Policy and Mail Ballot Rejection Rates, 2016–2024*. Its purpose is to close a specific gap — every existing portfolio project is a data-engineering artifact that never poses a research question, chooses a method, produces an estimate, or defends an interpretation. This project must produce a defensible causal estimate and a 6–10 page writing sample.
+The handoff document specifies a five-week, part-time portfolio project: *Administrative Burden at the Ballot Box: State Policy and Mail Ballot Rejection Rates, 2016–2024*. Its purpose is to close a specific gap — every existing portfolio project is a data-engineering artifact that never poses a research question, chooses a method, produces an estimate, or defends an interpretation. This project must produce a defensible causal estimate and, as of the current plan, **an interactive web dashboard** presenting the data and findings — this supersedes the handoff document's original 6–10 page static writing sample as the project's primary deliverable (see Week 5).
 
 Before planning, I verified the project's core feasibility against the live data rather than assuming it. **The project is viable, and several of the handoff document's stated fears are wrong in ways that change the plan.**
 
@@ -134,23 +134,27 @@ Fails loudly (non-zero exit) on violation. Writes `output/tables/validation_repo
 
 ACS 5-year jurisdiction covariates (median income, education, age, race, rurality) via the Census API, merged on county FIPS. Deferred: no Census API key yet, and with jurisdiction fixed effects the time-invariant county covariates drop out of the main spec anyway — this mainly buys the urban/rural heterogeneity split, which a static classification can supply if needed before Week 4. Wisconsin/Michigan/New England sub-county jurisdictions will not match a county-level ACS pull — aggregate the ACS county value onto constituent jurisdictions and **flag the row** rather than dropping it. Count and report the flagged share.
 
-### 2.3 `src/05_build_panel.py`
+### 2.3 `src/05_build_panel.py` — done
 
-Stack to jurisdiction-year long format. Emit `data/processed/panel.parquet` **and** `panel.csv`.
+Stacks the 5 cleaned interim files into `data/processed/panel.parquet` **and** `panel.csv` (32,305 rows), adding a `waves_present` column so the balanced-subset check is queryable directly from the panel.
 
-Produce a missingness report by state and jurisdiction size. Handoff §7 is right that missingness correlates with jurisdiction capacity, so listwise deletion would drop exactly the under-resourced jurisdictions the analysis is about. Document the pattern — a paragraph on non-random missingness is a strength in the writeup.
+Produces `output/tables/missingness_report.md` by state and jurisdiction size. Handoff §7 is right that missingness correlates with jurisdiction capacity, so listwise deletion would drop exactly the under-resourced jurisdictions the analysis is about — verified: state dominates the pattern (AL 19.7% usable, MS/PR/ID 60-73%, vs. dozens of states at 100%), with a milder gradient by jurisdiction size (93.8-94.3% in the bottom three size quartiles vs. 97.2% in the largest). Document the pattern — a paragraph on non-random missingness is a strength in the dashboard's limitations section.
 
-**Week 2 done when:** `panel.parquet` + `panel.csv` exist, validation passes with national totals reproduced, missingness documented. Expect ~30,600 usable of ~32,225 jurisdiction-years.
+**Week 2 done:** `panel.parquet` + `panel.csv` exist (32,305 rows, 30,621 usable = 94.8%, close to the ~30,600/~32,225 estimate), validation passes with national totals reproduced, missingness documented, 6,447 FIPS present in all 5 waves.
 
 ---
 
 ## Weeks 3–5 (outline — re-plan once the panel exists)
 
-**Week 3 — Policy coding.** The real bottleneck now that Week 2 is easier than budgeted. Hand-code statutory signature cure notice requirements by state-year from Voting Rights Lab / NCSL / Ballotpedia into `codebooks/policy_coding_sheet.md`, every decision sourced. Produce descriptives and the summary table. Note `C6a` (drop box returns) exists only in 2022/2024 — insufficient waves for a drop-box treatment; signature cure remains the right choice.
+**Week 3 — Policy coding — pilot done, 8 of 51 units coded.** The real bottleneck now that Week 2 is easier than budgeted, confirmed by the pilot: `codebooks/policy_coding_sheet.md` defines the coding methodology (statutory + mandatory + notice, each coded separately; a wave-alignment rule; a confidence scale) and demonstrates it on 8 deliberately varied states (CA, FL, GA, MI, ND, NC, AL, WI) chosen to stress-test edge cases — a clean 2018 statutory switcher (CA), an always-treated state (FL/GA), a switcher whose rule took effect just after a wave's election (MI, first-treated 2024 not 2022), a first-in-panel adopter (ND, 2020), a litigation- rather than statute-based regime (NC — excluded from the primary treatment variable per the handoff's "statutory" requirement), a clean never-treated control (AL), and a discretionary/non-uniform case (WI — "may," not "shall," so coded No despite some clerks curing in practice).
 
-**Week 4 — Estimation** (`src/05_estimate.R`). Naive TWFE via `fixest::feols`, state-clustered. Then the corrected staggered estimator — `did` (Callaway–Sant'Anna) and/or `fixest::sunab` — reported alongside TWFE with the difference explained. Treatment is state-level, so effective clusters ≈ 50: use `fwildclusterboot`. Heterogeneity by log ballots returned and urban/rural. Robustness: drop 2020; drop WI/MI; winsorize at p99; weight by ballots returned; fractional logit vs linear.
+Key finding from the pilot: **current-status trackers (NCSL, Ballotpedia) don't give adoption timing**, which the staggered-DiD design actually needs — California reads as a settled "Yes" everywhere but its mandatory statewide requirement only became law in 2018 (SB 759/AB 216); treated as always-on, it would silently drop out of the identifying variation. Every remaining state needs the same second research pass (legislative history or litigation timeline), not just a snapshot lookup — see the coding sheet's "Open items" for the 42 remaining units, the litigation-vs-statute states still to individually check, and Pennsylvania's county-optional cure as a known hard case needing its own convention before it's coded.
 
-**Week 5 — Writeup and packaging.** 6–10 pages for a policy audience. Four figures: event study, coefficient plot, rejection-rate distribution by state, county choropleth (Python/geopandas). README readable in 90 seconds. No `pandoc`/`quarto`/LaTeX is installed — decide the PDF path early (install `quarto`, or write in Google Docs and export).
+Produce descriptives and the summary table once the full 51-unit coding is done. Note `C6a` (drop box returns) exists only in 2022/2024 — insufficient waves for a drop-box treatment; signature cure remains the right choice.
+
+**Week 4 — Estimation** (`src/06_estimate.R`). Naive TWFE via `fixest::feols`, state-clustered. Then the corrected staggered estimator — `did` (Callaway–Sant'Anna) and/or `fixest::sunab` — reported alongside TWFE with the difference explained. Treatment is state-level, so effective clusters ≈ 50: use `fwildclusterboot`. Heterogeneity by log ballots returned and urban/rural. Robustness: drop 2020; drop WI/MI; winsorize at p99; weight by ballots returned; fractional logit vs linear.
+
+**Week 5 — Dashboard and packaging.** The primary deliverable is now an interactive web dashboard, not a static writing sample — replaces the handoff brief's original 6-10 page writeup as the project's main output. Content: the same four analyses as before (event study, coefficient plot, rejection-rate distribution by state, county choropleth) rebuilt as interactive views over the panel and estimation results, plus a findings summary and the same limitations/robustness material a writeup would have carried. Static assets (Python/geopandas for the choropleth, `06_estimate.R`'s output tables) feed the dashboard rather than a PDF. Decide the hosting/build path early in Week 5 (a self-contained static site is the lowest-risk choice given no `pandoc`/`quarto` install currently). README readable in 90 seconds either way.
 
 ---
 
@@ -162,6 +166,8 @@ Produce a missingness report by state and jurisdiction size. Handoff §7 is righ
 - **Reproducibility:** `bash run_all.sh` from a clean clone rebuilds the panel from raw downloads.
 - **R environment:** `fixest`, `did`, `didimputation`, `fwildclusterboot` are installed and verified to load (checked Week 2, ahead of Week 4) — no outstanding install risk here.
 
-## Non-goals (from handoff §8)
+## Non-goals
 
-No causal claim beyond what the design supports; no methodological novelty; no dashboard or web app; no partisan framing; one outcome, one treatment, one heterogeneity dimension. Scope creep is the main schedule risk.
+No causal claim beyond what the design supports; no methodological novelty; no partisan framing; one outcome, one treatment, one heterogeneity dimension. Scope creep is the main schedule risk.
+
+(Supersedes handoff §8's "not a dashboard or web app" — the deliverable direction changed; see Week 5 above. The rest of §8's scope discipline still holds.)

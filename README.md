@@ -1,9 +1,11 @@
 # Administrative Burden at the Ballot Box
 
-**Status: Week 1 in progress.** No estimate exists yet — this README will be
-rewritten with the question, finding, and method once Week 4 is done. See
-`PROJECT_PLAN.md` for the full plan and `Project_Handoff_Ballot_Rejection_Analysis.md`
-for the original project brief.
+**Status: Week 2 in progress.** No estimate exists yet — this README will be
+rewritten with the question, finding, and method once Week 4 is done. The
+project's primary deliverable is now an interactive web dashboard (not a
+static writeup — see `PROJECT_PLAN.md`'s Week 5). See `PROJECT_PLAN.md` for
+the full plan and `Project_Handoff_Ballot_Rejection_Analysis.md` for the
+original project brief.
 
 ## Research question
 
@@ -41,6 +43,9 @@ Rscript -e 'install.packages("fwildclusterboot", repos=c("https://s3alfisc.r-uni
 ```bash
 python src/01_download.py       # fetch all 5 waves + codebooks -> data/raw/
 python src/02_build_crosswalk.py  # derive + verify the variable crosswalk -> codebooks/crosswalk.yaml
+python src/03_clean_eavs.py       # clean + validate each wave -> data/interim/, output/tables/validation_report.md
+pytest tests/                     # independent validation suite over crosswalk.yaml + data/interim/
+python src/05_build_panel.py      # stack into the panel -> data/processed/panel.{parquet,csv}, output/tables/missingness_report.md
 ```
 
 ## Repository structure
@@ -64,5 +69,6 @@ python src/02_build_crosswalk.py  # derive + verify the variable crosswalk -> co
 │   ├── 06_estimate.R
 │   └── 07_figures.py
 ├── output/{figures,tables}/
+├── tests/            # pytest suite validating crosswalk.yaml + data/interim/, independent of 03_clean_eavs.py's own gate
 └── writeup/
 ```
