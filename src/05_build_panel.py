@@ -1,12 +1,19 @@
 """
 05_build_panel.py — Stack the five cleaned EAVS waves into one
-jurisdiction-year panel and document missingness.
+jurisdiction-year panel, join the treatment coding, and document
+missingness.
 
 Reads data/interim/eavs_<year>.parquet (written by 03_clean_eavs.py, already
 validated by that script's own gate and by tests/) and concatenates them
 into one long panel. This script does no additional cleaning or validation
 of its own — that already happened per-wave; its job is assembly and
 description.
+
+Also reads data/processed/treatment.csv (written by 04_build_treatment.py)
+and left-joins it onto the panel by (state_abbr, year). Every panel row is
+asserted to match — a silent non-match would quietly zero out a state's
+treatment status rather than error, which is the failure mode most worth
+guarding against here.
 
 Emits data/processed/panel.parquet and panel.csv (identical content, two
 formats — per PROJECT_PLAN.md's stack decision, R reads the CSV so the heavy
@@ -34,9 +41,17 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parent.parent
 INTERIM = ROOT / "data" / "interim"
 PROCESSED = ROOT / "data" / "processed"
+TREATMENT_PATH = PROCESSED / "treatment.csv"
 MISSINGNESS_REPORT = ROOT / "output" / "tables" / "missingness_report.md"
 
 WAVES = (2016, 2018, 2020, 2022, 2024)
+
+# EAVS covers 50 states + DC + 5 U.S. territories; the policy coding sheet
+# (and the underlying legal-research question) only covers the 51 states +
+# DC. Territories are out of scope for the treatment variable, not a join
+# failure — flagged via in_scope=False rather than silently dropped or
+# forced to a fabricated Yes/No.
+TERRITORIES = ("AS", "GU", "MP", "PR", "VI")
 
 
 def load_panel() -> pd.DataFrame:
@@ -50,7 +65,39 @@ def load_panel() -> pd.DataFrame:
     waves_present = panel.groupby("fips")["year"].transform("nunique")
     panel["waves_present"] = waves_present
 
+    panel = join_treatment(panel)
+
     return panel
+
+
+def join_treatment(panel: pd.DataFrame) -> pd.DataFrame:
+    if not TREATMENT_PATH.exists():
+        raise FileNotFoundError(
+            f"{TREATMENT_PATH} not found — run `python src/04_build_treatment.py` first."
+        )
+    treatment = pd.read_csv(TREATMENT_PATH)
+
+    n_before = len(panel)
+    merged = panel.merge(treatment, on=["state_abbr", "year"], how="left", validate="m:1")
+    assert len(merged) == n_before, "treatment join changed row count — duplicate keys in treatment.csv"
+
+    merged["in_scope"] = ~merged["state_abbr"].isin(TERRITORIES)
+
+    unmatched = merged.loc[merged["treated"].isna() & merged["in_scope"], "state_abbr"].unique()
+    assert len(unmatched) == 0, (
+        f"in-scope panel state_abbr values with no match in treatment.csv: {sorted(unmatched)} — "
+        "every state/DC row must have a treatment row (territories are the only expected exception)."
+    )
+    territory_rows = merged.loc[~merged["in_scope"]]
+    assert set(territory_rows["state_abbr"].unique()) <= set(TERRITORIES)
+
+    # Territories: no treatment coding exists (out of scope), so treated/
+    # sensitivity_treated stay NaN rather than a fabricated 0/1 — anything
+    # downstream must filter on in_scope before using these columns.
+    merged["treated"] = merged["treated"].astype("Int64")
+    merged["sensitivity_treated"] = merged["sensitivity_treated"].astype("Int64")
+
+    return merged
 
 
 def missingness_report(panel: pd.DataFrame) -> str:
@@ -66,6 +113,17 @@ def missingness_report(panel: pd.DataFrame) -> str:
     lines.append(f"- Usable rows: {n_usable:,} ({n_usable / n_rows:.1%})")
     lines.append(f"- Distinct FIPS across all waves: {n_fips_total:,}")
     lines.append(f"- FIPS present in all {len(WAVES)} waves: {n_fips_all_waves:,}")
+    n_in_scope_states = panel.loc[panel["in_scope"], "state_abbr"].nunique()
+    n_territories = panel.loc[~panel["in_scope"], "state_abbr"].nunique()
+    lines.append(
+        f"- Treatment join (src/04_build_treatment.py): 100% match on all "
+        f"{n_in_scope_states} states + DC x {len(WAVES)} waves (see "
+        f"join_treatment() in this script for the assertion that enforces "
+        f"this). {n_territories} U.S. territories ({', '.join(TERRITORIES)}) "
+        f"are out of scope for the treatment variable (`in_scope=False`, "
+        f"`treated`/`sensitivity_treated` left null) — the coding sheet "
+        f"only covers the 50 states + DC."
+    )
     lines.append("")
 
     lines.append("## Usable-row share by state (ascending — worst first)")
