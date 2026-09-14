@@ -1,0 +1,18 @@
+{
+  "_source": "output/tables/heterogeneity.md, from the confirmed src/06_estimate.R run, with the mechanical diagnosis added during the follow-up investigation (PROJECT_PLAN.md Week 4).",
+  "twfe_interaction": {
+    "label": "TWFE: treated x log(ballots returned)",
+    "estimate": 0.00098,
+    "se": 0.00089,
+    "p": 0.2745,
+    "n_obs": 30523,
+    "n_states": 51
+  },
+  "subsamples": [
+    { "model": "Sun-Abraham", "subsample": "large", "estimate": 0.00691, "se": 0.00322, "p": 0.0388, "n_obs": 6113, "n_states": 37 },
+    { "model": "Callaway-Sant'Anna", "subsample": "large", "estimate": -0.00452, "se": 0.00566, "p": 0.4248, "n_obs": 6119, "n_states": 37 },
+    { "model": "Sun-Abraham", "subsample": "small", "estimate": -0.00170, "se": 0.00277, "p": 0.5471, "n_obs": 9673, "n_states": 22 },
+    { "model": "Callaway-Sant'Anna", "subsample": "small", "estimate": -0.00967, "se": 0.00243, "p": 0.0001, "n_obs": 9703, "n_states": 22 }
+  ],
+  "diagnosis": "Sun-Abraham and Callaway-Sant'Anna DISAGREE: Sun-Abraham finds a significant positive effect in large jurisdictions and a null in small ones; Callaway-Sant'Anna finds the opposite (null in large, significant negative in small). This has an identifiable mechanical cause, not an unexplained contradiction: (a) the small-jurisdiction subsample has NO 2018 or 2024 cohort at all -- only 2020 and 2022 survive the size filter (9 treated states total) -- and one of its 8 group-time cells is an outlier by an order of magnitude (att=-0.045, se=0.0215, vs. everything else under 0.012); (b) the large-jurisdiction subsample's own cohort-level effects flip sign across periods within the same cohort (the 2024 cohort: +0.0162 at one post-period, -0.0038 at the next) -- Sun-Abraham's interaction-weighted and Callaway-Sant'Anna's group-size-weighted averaging are not guaranteed to agree when underlying effects are this heterogeneous, so the disagreement is expected, not a bug in either estimator. Conclusion: jurisdiction-size heterogeneity is unidentifiable with the current cohort coverage, not merely uncertain -- read as 'not establishable with this design,' not as evidence for either pattern."
+}

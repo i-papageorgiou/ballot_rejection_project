@@ -1,14 +1,15 @@
 # Administrative Burden at the Ballot Box
 
-**Status: Weeks 1–3 done; Week 4 part 1 (treatment-panel join + first-cut
-TWFE/Sun-Abraham estimates) done; Week 4 part 2 (bootstrap SEs,
-heterogeneity, robustness checklist) and Week 5 (dashboard) not started.**
-A first, preliminary estimate exists (`output/tables/estimates_v1.md`) but
-is not yet robustness-checked — see `PROJECT_PLAN.md`'s Week 4 section
-before citing it. The project's primary deliverable is still an
-interactive web dashboard (not a static writeup — see `PROJECT_PLAN.md`'s
-Week 5). **Picking this project up? Start with `HANDOFF.md`** — it has the
-reading order, verified facts, and next steps. See `PROJECT_PLAN.md` for
+**Status: Weeks 1–5 done.** TWFE, Sun-Abraham, and Callaway-Sant'Anna all
+agree on a clean null effect (see `PROJECT_PLAN.md`'s Week 4 section for
+the two diagnosed-but-unresolved caveats worth reading before citing any
+number). The project's deliverable — an interactive web dashboard, not a
+static writeup — is built at `docs/index.html`:
+[**live dashboard**](https://i-papageorgiou.github.io/ballot_rejection_project/)
+once GitHub Pages is enabled (Settings → Pages → Deploy from branch →
+`main` /docs — not yet done as of this commit). **Picking this project
+up? Start with `HANDOFF.md`** — it has the reading order, verified
+facts, and next steps. See `PROJECT_PLAN.md` for
 the full week-by-week plan and `Project_Handoff_Ballot_Rejection_Analysis.md`
 for the original project brief.
 
@@ -52,7 +53,8 @@ python src/03_clean_eavs.py       # clean + validate each wave -> data/interim/,
 pytest tests/                     # independent validation suite over crosswalk.yaml + data/interim/
 python src/04_build_treatment.py  # code the 51-state treatment variable -> data/processed/treatment.csv
 python src/05_build_panel.py      # stack into the panel + join treatment -> data/processed/panel.{parquet,csv}, output/tables/missingness_report.md
-Rscript src/06_estimate.R          # first-cut TWFE vs. Sun-Abraham estimates -> output/tables/estimates_v1.md
+Rscript src/06_estimate.R          # TWFE, Sun-Abraham, Callaway-Sant'Anna, bootstrap, heterogeneity, robustness (~25-30 min) -> output/tables/{estimates_v1,heterogeneity,robustness_checklist}.md, docs/data/*.json
+python src/07_figures.py          # panel-derived dashboard data -> docs/data/{state_distribution,county_choropleth}.json
 ```
 
 Python steps above need `pandas`/`pyarrow`; this repo was built and
@@ -80,9 +82,14 @@ first if the anaconda interpreter isn't the first `python3` on `PATH`).
 │   ├── 03_clean_eavs.py
 │   ├── 04_build_treatment.py   # 51-state treatment coding -> treatment.csv
 │   ├── 05_build_panel.py       # stack panel + join treatment
-│   ├── 06_estimate.R           # TWFE vs. Sun-Abraham, first cut
-│   └── 07_figures.py           # not yet written (Week 5)
+│   ├── 06_estimate.R           # TWFE, Sun-Abraham, Callaway-Sant'Anna + bootstrap/heterogeneity/robustness
+│   └── 07_figures.py           # panel-derived dashboard data (docs/data/)
 ├── output/{figures,tables}/
+├── docs/               # Week 5 dashboard — GitHub Pages serves this folder
+│   ├── index.html
+│   ├── app.js
+│   ├── style.css
+│   └── data/           # JSON written by 06_estimate.R + 07_figures.py
 ├── tests/            # pytest suite validating crosswalk.yaml + data/interim/, independent of 03_clean_eavs.py's own gate
 └── writeup/
 ```

@@ -26,9 +26,17 @@ specific cohort, and a heterogeneity result now understood to be
 unidentifiable with the current cohort coverage, not just uncertain.**
 See "First-cut estimates" below and `PROJECT_PLAN.md`'s Week 4 section
 for the full diagnosis — read them before using either result, but
-there's nothing further to chase on either one without new data. Week 5
-(an interactive dashboard — the deliverable changed from a static
-writeup partway through; see `PROJECT_PLAN.md`) is next.
+there's nothing further to chase on either one without new data.
+
+**Week 5 is also done.** `docs/index.html` is a self-contained,
+GitHub-Pages-ready dashboard (Plotly.js via CDN, no build step) covering
+all four analyses from the original plan plus a headline summary and a
+written limitations section. **GitHub Pages is not yet enabled** —
+that's a repo-settings action for you, not something done automatically:
+Settings → Pages → Deploy from branch → `main` /docs. Until then the
+page only works locally (`python3 -m http.server` from `docs/`, or open
+`docs/index.html` directly — it fetches only local JSON + two CDN
+resources, no other setup needed).
 
 **Read in this order**:
 1. `PROJECT_PLAN.md` — the living plan; every week's section was updated
@@ -54,7 +62,8 @@ python src/03_clean_eavs.py       # clean + validate each wave -> data/interim/,
 pytest tests/                     # independent check on the above, from outside the pipeline's own gate
 python src/04_build_treatment.py  # code the 51-state treatment variable -> data/processed/treatment.csv
 python src/05_build_panel.py      # stack into panel + join treatment -> data/processed/panel.{parquet,csv}, output/tables/missingness_report.md
-Rscript src/06_estimate.R          # TWFE, Sun-Abraham, Callaway-Sant'Anna, bootstrap, heterogeneity, robustness -> output/tables/{estimates_v1,heterogeneity,robustness_checklist}.md
+Rscript src/06_estimate.R          # TWFE, Sun-Abraham, Callaway-Sant'Anna, bootstrap, heterogeneity, robustness -> output/tables/{estimates_v1,heterogeneity,robustness_checklist}.md, docs/data/*.json
+python src/07_figures.py          # panel-derived dashboard data -> docs/data/{state_distribution,county_choropleth}.json
 ```
 
 `06_estimate.R` takes **~25-30 minutes** (the wild-cluster bootstrap alone
@@ -283,12 +292,26 @@ report:
    diagnosis with exact cells/states. **There is nothing further to chase
    on either one without new data** — the correct next step is to carry
    both forward as documented limitations, not to keep investigating.
-4. **Week 5 — dashboard**: event study, coefficient
-   plot, rejection-rate distribution by state, county choropleth
-   (`geopandas`, already working in this environment). The deliverable
-   is an interactive dashboard, not a static writeup — see
-   `PROJECT_PLAN.md`'s Week 5 section for why that changed and what it
-   implies for the build.
+4. ~~Week 5 — dashboard.~~ **Done** — `docs/index.html` (+ `app.js`,
+   `style.css`, `docs/data/*.json`), self-contained static page, Plotly.js
+   via CDN, no build step. Verified end-to-end with headless Chrome, not
+   just visual review — this caught and fixed a dead CDN path and a
+   JSON-field-name mismatch that would otherwise have shipped silently
+   broken. County choropleth is scoped to the 44 states + DC that report
+   at true county granularity; the 7 town-reporting states (WI + New
+   England) are grayed out with an explicit legend note, not silently
+   dropped — see `PROJECT_PLAN.md`'s Week 5 section for the full
+   verification.
+5. **Enable GitHub Pages** (Settings → Pages → Deploy from branch →
+   `main` /docs) — the one remaining step, and it's a repo-settings
+   action for you, not something to be done automatically. Once live,
+   the URL is `https://i-papageorgiou.github.io/ballot_rejection_project/`.
+6. **Optional, not required for the project's stated scope**: build the
+   external town-to-county crosswalk for WI/New England (see the
+   choropleth scope decision above) if full county-level national
+   coverage becomes worth the new-data-validation effort; re-run
+   `06_estimate.R`'s bootstrap with a larger `B` or investigate its
+   ~20-minute runtime further if that becomes a recurring pain point.
 
 ## Practical notes
 

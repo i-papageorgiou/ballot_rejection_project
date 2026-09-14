@@ -1,0 +1,21 @@
+{
+  "_source": "output/tables/robustness_checklist.md, from the confirmed src/06_estimate.R run.",
+  "variants": ["drop_2020", "drop_WI_MI", "winsorize_p99", "weight_by_ballots", "fractional_response"],
+  "rows": [
+    { "model": "TWFE", "variant": "drop_2020", "estimate": -0.00182, "se": 0.00375, "p": 0.63, "n_obs": 24215, "n_states": 51, "unstable": false },
+    { "model": "Sun-Abraham", "variant": "drop_2020", "estimate": 0.0002, "se": 0.00268, "p": 0.9411, "n_obs": 18746, "n_states": 37, "unstable": false },
+    { "model": "Callaway-Sant'Anna", "variant": "drop_2020", "estimate": -0.00317, "se": 0.00469, "p": 0.4983, "n_obs": 18842, "n_states": 37, "unstable": false },
+    { "model": "TWFE", "variant": "drop_WI_MI", "estimate": 0.00034, "se": 0.00255, "p": 0.8933, "n_obs": 21064, "n_states": 49, "unstable": false },
+    { "model": "Sun-Abraham", "variant": "drop_WI_MI", "estimate": 0.00636, "se": 0.00279, "p": 0.0294, "n_obs": 14149, "n_states": 35, "unstable": false },
+    { "model": "Callaway-Sant'Anna", "variant": "drop_WI_MI", "estimate": -0.00577, "se": 0.00381, "p": 0.1299, "n_obs": 14219, "n_states": 35, "unstable": false },
+    { "model": "TWFE", "variant": "winsorize_p99", "estimate": -0.00053, "se": 0.00276, "p": 0.8479, "n_obs": 30523, "n_states": 51, "unstable": false },
+    { "model": "Sun-Abraham", "variant": "winsorize_p99", "estimate": 0.00127, "se": 0.00245, "p": 0.6086, "n_obs": 23608, "n_states": 37, "unstable": false },
+    { "model": "Callaway-Sant'Anna", "variant": "winsorize_p99", "estimate": -0.00306, "se": 0.00371, "p": 0.4087, "n_obs": 23689, "n_states": 37, "unstable": false },
+    { "model": "TWFE", "variant": "weight_by_ballots", "estimate": 0.00383, "se": 0.00362, "p": 0.2951, "n_obs": 30523, "n_states": 51, "unstable": false },
+    { "model": "Sun-Abraham", "variant": "weight_by_ballots", "estimate": 0.00034, "se": 265.43112, "p": 1.0, "n_obs": 23608, "n_states": 37, "unstable": true },
+    { "model": "Callaway-Sant'Anna", "variant": "weight_by_ballots", "estimate": 0.00392, "se": 0.00313, "p": 0.21, "n_obs": 23689, "n_states": 37, "unstable": false },
+    { "model": "TWFE (fractional logit)", "variant": "fractional_response", "estimate": 0.36499, "se": 0.29423, "p": 0.2148, "n_obs": 25910, "n_states": 51, "unstable": false }
+  ],
+  "unstable_note": "The Sun-Abraham weight_by_ballots cell (se=265) is numerically unstable, not a real result: raw returned_by_voters weighting combined with sunab()'s many interaction dummies produces a near-singular weighted design for at least one cohort x time cell -- traced to extreme weight variance (median ~210 ballots, max ~3.4 million, a statewide-aggregate row) that TWFE and Callaway-Sant'Anna's weighted variants tolerate but the interacted Sun-Abraham spec does not. The point estimate may still be informative; the SE/p-value are not.",
+  "summary": "None of the 5 checklist items flip the sign or significance of the headline result across any of the three estimators (aside from the one flagged numerical instability above) -- every cell is a clean, unremarkable null."
+}

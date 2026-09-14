@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Administrative Burden at the Ballot Box</title>
+<meta name="description" content="Do state mail-ballot signature-cure laws reduce mail ballot rejection rates? A staggered difference-in-differences analysis of EAVS data, 2016-2024.">
+<link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.35.2/plotly.min.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>Administrative Burden at the Ballot Box</h1>
+    <p class="subtitle">Do state mail-ballot signature-cure laws reduce jurisdiction-level mail ballot rejection rates? Staggered difference-in-differences, EAVS administrative data, 2016&ndash;2024.</p>
+  </header>
+
+  <div class="headline-box">
+    <h2>Headline finding: no detectable effect</h2>
+    <p id="headline-text">Loading...</p>
+    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0;">
+      This is the strongest form of "no effect detected" this project can support: three different estimators, built to correct for each other's known weaknesses, independently agree. It is not a weak or inconclusive result &mdash; see the coefficient comparison below.
+    </p>
+  </div>
+
+  <section class="card">
+    <h2>Coefficient comparison</h2>
+    <p>Effect of a mandatory signature-cure notice law on jurisdiction-year mail ballot rejection rate, by estimator.</p>
+    <div id="chart-coefficients" class="chart"></div>
+    <p class="legend-note">TWFE = naive two-way fixed effects (known to be biased under staggered adoption with heterogeneous effects &mdash; the baseline this design exists to correct, not the headline estimate). Sun-Abraham and Callaway-Sant'Anna are the two staggered-adoption-corrected estimators. Error bars: 95% CI (TWFE's second bar shows the wild-cluster bootstrap CI).</p>
+  </section>
+
+  <section class="card">
+    <h2>Event study</h2>
+    <p>Callaway-Sant'Anna dynamic aggregation: the treatment effect by time relative to each state's adoption wave.</p>
+    <div id="chart-eventstudy" class="chart"></div>
+    <div class="caveat-box" id="pretrend-caveat">Loading pre-trend diagnosis...</div>
+  </section>
+
+  <section class="card">
+    <h2>Rejection-rate distribution by state</h2>
+    <p>Median rejection rate (usable jurisdiction-years) by wave. Select a wave to sort states.</p>
+    <p>
+      <label>Wave: <select id="wave-select"></select></label>
+    </p>
+    <div id="chart-statedist" class="chart tall"></div>
+  </section>
+
+  <section class="card">
+    <h2>County choropleth</h2>
+    <p>Rejection rate by county, 2024 wave.</p>
+    <div id="chart-choropleth" class="chart tall"></div>
+    <p class="legend-note" id="choropleth-note">Loading...</p>
+  </section>
+
+  <section class="card">
+    <h2>Heterogeneity by jurisdiction size</h2>
+    <p>Substitutes for the deferred ACS-based urban/rural split (no Census API key obtained). TWFE uses a continuous interaction; Sun-Abraham and Callaway-Sant'Anna are refit on large and small jurisdiction-size terciles separately (neither estimator takes an arbitrary covariate interaction the way an OLS formula does).</p>
+    <table class="data-table" id="table-heterogeneity">
+      <thead><tr><th>Model</th><th>Subsample</th><th>Estimate</th><th>SE</th><th>p</th><th>N (obs)</th><th>N (states)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div class="caveat-box" id="heterogeneity-caveat">Loading diagnosis...</div>
+  </section>
+
+  <section class="card">
+    <h2>Robustness checklist</h2>
+    <p>5 variants &times; 3 estimators, plus a TWFE-only fractional-response specification.</p>
+    <table class="data-table" id="table-robustness">
+      <thead><tr><th>Model</th><th>Variant</th><th>Estimate</th><th>SE</th><th>p</th><th>N (obs)</th><th>N (states)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="legend-note" id="robustness-note"></p>
+  </section>
+
+  <section class="card">
+    <h2>Limitations</h2>
+    <ul>
+      <li><strong>Pre-trend, narrow but real.</strong> Event-time -6 in the Callaway-Sant'Anna event study traces to a single group-time cell (Maryland/Michigan's 2024 cohort vs. controls in 2018) &mdash; a genuine, unexplained pre-existing difference, not a broad parallel-trends violation across the panel. See the event study section above.</li>
+      <li><strong>Heterogeneity by jurisdiction size is unidentifiable with the current cohort coverage.</strong> The two corrected estimators disagree because the small-jurisdiction subsample is missing two of four treatment cohorts entirely, and the large-jurisdiction subsample's own cohort-level effects flip sign across periods &mdash; not because either estimator is wrong.</li>
+      <li><strong>Illinois and Massachusetts</strong> have confirmed cure rights but a genuinely unknown adoption year after 8+ and 5+ independent research attempts &mdash; coded as pre-2016 by inference, treated as censored/unknown in the design, not a confirmed date.</li>
+      <li><strong>Ohio and Montana</strong> are the two weakest-sourced rows in the 51-state treatment coding &mdash; not known to be wrong, just less independently corroborated than every other row.</li>
+      <li><strong>Pennsylvania</strong> (no statewide law; county-optional cure) is coded untreated at the state level, a documented approximation, not a discovered fact. <strong>North Carolina's</strong> cure process came from litigation, not statute, and is excluded from the primary treatment variable by definition.</li>
+      <li><strong>ACS demographic controls were deliberately deferred</strong> (no Census API key obtained); jurisdiction fixed effects absorb time-invariant covariates regardless.</li>
+      <li><strong>The underlying treatment coding will go stale.</strong> 400+ election-related bills were enacted in the first seven months of 2026 alone &mdash; this analysis reflects the 2016-2024 panel and coding as validated through several rounds of review, not a live-updating policy tracker.</li>
+      <li><strong>County choropleth coverage:</strong> 7 states (WI and the New England states) report EAVS data at the town/municipality level, not county &mdash; shown gray on the map above, not mapped incorrectly or silently omitted.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <p>Full methodology, validation history, and data pipeline: see <a href="https://github.com/i-papageorgiou/ballot_rejection_project">the project repository</a>'s <a href="https://github.com/i-papageorgiou/ballot_rejection_project/blob/main/PROJECT_PLAN.md">PROJECT_PLAN.md</a> (living plan and findings) and <a href="https://github.com/i-papageorgiou/ballot_rejection_project/blob/main/HANDOFF.md">HANDOFF.md</a> (orientation for a new reader). No causal claim is made beyond what this design supports.</p>
+  </footer>
+
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -33,6 +33,7 @@ suppressPackageStartupMessages({
   library(modelsummary)
   library(did)
   library(fwildclusterboot)
+  library(jsonlite)
 })
 
 .args <- commandArgs(trailingOnly = FALSE)
@@ -42,6 +43,11 @@ panel_path <- file.path(root, "data", "processed", "panel.csv")
 treatment_path <- file.path(root, "data", "processed", "treatment.csv")
 out_dir <- file.path(root, "output", "tables")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
+# Week 5 dashboard data (docs/index.html reads these directly) — written
+# alongside the markdown tables below, from the same in-memory model
+# objects, so the two can never silently drift apart.
+docs_data_dir <- file.path(root, "docs", "data")
+dir.create(docs_data_dir, showWarnings = FALSE, recursive = TRUE)
 
 panel <- fread(panel_path)
 treatment <- fread(treatment_path)
@@ -406,6 +412,84 @@ if (any(unstable_flag != "")) {
 }
 writeLines(rob_lines, rob_path)
 cat(sprintf("wrote %s\n", rob_path))
+
+# ==========================================================================
+# WEEK 5 DASHBOARD DATA (docs/data/*.json) — written from the same
+# in-memory objects as the markdown tables above, so the dashboard can
+# never silently drift from what this script actually computed.
+# ==========================================================================
+
+twfe_ci <- twfe_fit$row$estimate + c(-1.96, 1.96) * twfe_fit$row$se
+sunab_ci <- sunab_fit$row$estimate + c(-1.96, 1.96) * sunab_fit$row$se
+cs_ci <- cs_fit$row$estimate + c(-1.96, 1.96) * cs_fit$row$se
+
+model_comparison <- list(
+  outcome = "rejection_rate (rejected_total / returned_by_voters), usable & in-scope (50 states + DC) jurisdiction-years, 2016-2024",
+  models = list(
+    list(model = "TWFE", label = "Naive two-way fixed effects",
+         estimate = twfe_fit$row$estimate, se = twfe_fit$row$se, p = twfe_fit$row$p,
+         ci_lo = twfe_ci[1], ci_hi = twfe_ci[2],
+         bootstrap_p = boot$p_val, bootstrap_ci = boot$conf_int,
+         n_obs = twfe_fit$row$n_obs, n_states = twfe_fit$row$n_states),
+    list(model = "Sun-Abraham", label = "Sun & Abraham (2021) interaction-weighted",
+         estimate = sunab_fit$row$estimate, se = sunab_fit$row$se, p = sunab_fit$row$p,
+         ci_lo = sunab_ci[1], ci_hi = sunab_ci[2],
+         n_obs = sunab_fit$row$n_obs, n_states = sunab_fit$row$n_states),
+    list(model = "Callaway-Sant'Anna", label = "Callaway & Sant'Anna (2021) doubly-robust",
+         estimate = cs_fit$row$estimate, se = cs_fit$row$se, p = cs_fit$row$p,
+         ci_lo = cs_ci[1], ci_hi = cs_ci[2],
+         n_obs = cs_fit$row$n_obs, n_states = cs_fit$row$n_states)
+  )
+)
+write_json(model_comparison, file.path(docs_data_dir, "model_comparison.json"), auto_unbox = TRUE, digits = 6)
+
+event_study <- list(
+  overall = list(estimate = cs_dynamic$overall.att, se = cs_dynamic$overall.se),
+  events = lapply(seq_along(cs_dynamic$egt), function(i) list(
+    event_time = cs_dynamic$egt[i],
+    estimate = cs_dynamic$att.egt[i],
+    se = cs_dynamic$se.egt[i],
+    band_lo = cs_dynamic$att.egt[i] - cs_dynamic$crit.val.egt * cs_dynamic$se.egt[i],
+    band_hi = cs_dynamic$att.egt[i] + cs_dynamic$crit.val.egt * cs_dynamic$se.egt[i],
+    significant = i %in% pre_violation
+  )),
+  band_type = "95% simultaneous confidence band (corrects for testing multiple event-times at once)",
+  # docs/app.js reads this as `data.pretrend_diagnosis` (flagged_event_time,
+  # driving_cell, explanation) — NOT `pretrend_note`, which is a different,
+  # simpler field only used in the estimates_v1.md notes above. The
+  # driving_cell/states breakdown (which specific group-time cohort causes
+  # a flag) was done as a one-off manual investigation, not automated here
+  # — a future rerun leaves driving_cell null unless someone re-does that
+  # decomposition; app.js already handles a null driving_cell gracefully.
+  pretrend_diagnosis = if (length(pre_violation) > 0) {
+    list(
+      flagged_event_time = cs_dynamic$egt[pre_violation],
+      driving_cell = NULL,
+      explanation = pretrend_note
+    )
+  } else {
+    NULL
+  }
+)
+write_json(event_study, file.path(docs_data_dir, "event_study.json"), auto_unbox = TRUE, digits = 6, null = "null")
+
+write_json(list(
+  twfe_interaction = het_twfe_row,
+  subsamples = heterogeneity_table[model != "TWFE"]
+), file.path(docs_data_dir, "heterogeneity.json"), auto_unbox = TRUE, digits = 6)
+
+write_json(list(
+  rows = robustness_table[, .(model, variant, estimate, se, p, n_obs, n_states,
+                                unstable = se > 1)]
+), file.path(docs_data_dir, "robustness.json"), auto_unbox = TRUE, digits = 6)
+
+cat(sprintf("wrote dashboard JSON to %s\n", docs_data_dir))
+cat("NOTE: these JSON files were hand-authored once from this exact run's\n")
+cat("console/markdown output (see docs/data/*.json's own '_source' field);\n")
+cat("this code path regenerates them from scratch on the NEXT full rerun,\n")
+cat("at which point the hand-authored '_source' annotations will be gone\n")
+cat("(replaced by these R list structures, which don't carry that field) —\n")
+cat("that is expected and fine, not a regression.\n")
 
 # --- Console summary --------------------------------------------------------
 cat("\n--- TWFE ---\n")
