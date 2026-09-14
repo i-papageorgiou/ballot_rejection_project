@@ -7,6 +7,7 @@
 - Distinct FIPS across all waves: 6,480
 - FIPS present in all 5 waves: 6,447
 - Treatment join (src/04_build_treatment.py): 100% match on all 51 states + DC x 5 waves (see join_treatment() in this script for the assertion that enforces this). 5 U.S. territories (AS, GU, MP, PR, VI) are out of scope for the treatment variable (`in_scope=False`, `treated`/`sensitivity_treated` left null) — the coding sheet only covers the 50 states + DC.
+- Outlier flag (VALIDATION_REPORT.md Defect 7): 15 usable jurisdiction-years have `rejection_rate == 1.0` exactly (implausible for any but a handful of ballots) and are marked `flagged_outlier=True`. Not removed from `usable` — see the flag_outliers() docstring in this script for why.
 
 ## Usable-row share by state (ascending — worst first)
 

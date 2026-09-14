@@ -92,7 +92,7 @@ TREATMENT: dict[str, dict] = {
     "MD": dict(first_treated_wave=2024, mechanism="statute", confidence="High"),
     "MA": dict(first_treated_wave="pre-2016", mechanism="statute", confidence="Medium",
                notes="Existence confirmed via direct statutory text; adoption year is an inference."),
-    "MI": dict(first_treated_wave=2024, mechanism="constitutional amendment (2022 Ballot Proposal 2)", confidence="High"),
+    "MI": dict(first_treated_wave=2024, mechanism="constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule", confidence="High"),
     "MN": dict(first_treated_wave="pre-2016", mechanism="statute", confidence="High"),
     "MS": dict(first_treated_wave=2020, mechanism="guidance (administrative rule)", confidence="High"),
     "MO": dict(first_treated_wave="never", mechanism="none", confidence="Medium"),

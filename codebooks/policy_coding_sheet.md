@@ -335,13 +335,17 @@ they anchor a result, not trusted just because a row exists for them.
   Also worth flagging in the writeup as a substantively interesting case in
   its own right (a state whose statutory signature-verification regime
   became judicially unenforceable mid-panel).
-- **Mississippi's row was corrected mid-project** (see "What scaling
-  found" #8) — from "pre-2016" to "2022," after chasing an unrelated
-  Oklahoma lead surfaced a direct contradiction. Worth a second look before
-  it anchors a result, precisely because the correction came from a lucky
-  cross-reference rather than a planned check — there is no principled
-  reason to believe every other row's original coding is equally free of a
-  similar error, only that no other contradiction happened to surface.
+- **Mississippi's row was corrected twice mid-project** (see "What
+  scaling found" #8) — first from "pre-2016" to "2022" after chasing an
+  unrelated Oklahoma lead surfaced a direct contradiction, then from
+  "2022" to **"2020"** after a Pass 2 zero-cost arithmetic recheck found
+  the first correction's own recorded date (Oct. 2020) contradicted its
+  own recorded wave. The table above reflects the final, corrected value
+  (2020). Worth a second look before it anchors a result regardless,
+  precisely because both corrections came from incidental checks rather
+  than a planned audit of this specific row — there is no principled
+  reason to believe every other row's original coding is equally free of
+  a similar error, only that no other contradiction happened to surface.
 - **Pennsylvania's county-optional design decision** — state-level `Partial`
   vs. a jurisdiction-level covariate — should be made deliberately, not
   defaulted, since PA is a large state whose classification could matter to

@@ -66,7 +66,27 @@ def load_panel() -> pd.DataFrame:
     panel["waves_present"] = waves_present
 
     panel = join_treatment(panel)
+    panel = flag_outliers(panel)
 
+    return panel
+
+
+def flag_outliers(panel: pd.DataFrame) -> pd.DataFrame:
+    """Flag (not remove) jurisdiction-years with an implausible outcome.
+
+    VALIDATION_REPORT.md (Pass 4, Defect 7) found 15 usable jurisdiction-
+    years with rejection_rate == 1.0 exactly (100% of returned ballots
+    rejected), several with non-trivial N (e.g. 383, 943 returned
+    ballots) — more likely a raw EAVS data-entry artifact (returned_
+    by_voters miscoded identically to rejected_total) than a real
+    outcome, but not confirmed either way. Flagged rather than dropped:
+    usable's own rate<=1 threshold already excludes what's structurally
+    impossible, and this pass has no basis to unilaterally delete real
+    rows from a validated panel. Downstream code (06_estimate.R and any
+    successor) can filter on flagged_outlier explicitly as a documented
+    robustness check, rather than trust the value silently.
+    """
+    panel["flagged_outlier"] = panel["usable"] & (panel["rejection_rate"] == 1.0)
     return panel
 
 
@@ -123,6 +143,14 @@ def missingness_report(panel: pd.DataFrame) -> str:
         f"are out of scope for the treatment variable (`in_scope=False`, "
         f"`treated`/`sensitivity_treated` left null) — the coding sheet "
         f"only covers the 50 states + DC."
+    )
+    n_outliers = int(panel["flagged_outlier"].sum())
+    lines.append(
+        f"- Outlier flag (VALIDATION_REPORT.md Defect 7): {n_outliers} usable "
+        f"jurisdiction-years have `rejection_rate == 1.0` exactly (implausible "
+        f"for any but a handful of ballots) and are marked `flagged_outlier=True`. "
+        f"Not removed from `usable` — see the flag_outliers() docstring in "
+        f"this script for why."
     )
     lines.append("")
 

@@ -1,17 +1,26 @@
-# 06_estimate.R — First-cut estimation: naive TWFE vs. a staggered-
-# adoption-corrected estimator, side by side.
+# 06_estimate.R — Estimation: naive TWFE vs. two staggered-adoption-
+# corrected estimators (Sun-Abraham, Callaway-Sant'Anna), wild-cluster
+# bootstrap inference, heterogeneity by jurisdiction size, and a 5-item
+# robustness checklist re-run through all three estimators.
 #
 # Reads data/processed/panel.csv (R side reads CSV, not parquet, per
 # PROJECT_PLAN.md's stack decision — avoids installing arrow/sf here).
 # Restricts to usable, in-scope (50 states + DC, no territories) rows.
 #
-# This is a FIRST CUT, deliberately scoped (see HANDOFF.md's Week 4 next
-# steps and PROJECT_PLAN.md's Week 4 section):
-#   - fwildclusterboot wild-cluster bootstrap: NOT run here yet.
-#   - Heterogeneity (log ballots returned x treatment, urban/rural): not here.
-#   - Robustness checklist (drop 2020; drop WI/MI; winsorize p99; weight by
-#     ballots returned; fractional logit vs. linear): not here.
-# These are explicitly Week 4 "part 2" — see the TODO block at the bottom.
+# VALIDATION_REPORT.md (Pass 4) found an earlier version of this script
+# derived the Sun-Abraham cohort from the FILTERED (usable & in_scope)
+# sample rather than from treatment.csv, which silently fabricated a
+# treatment event for Vermont (its 2016 wave is 0% usable, so it looked
+# like a 2018 adopter instead of always-treated). Fixed: cohort comes
+# from treatment.csv directly everywhere in this script, and
+# always-treated states (no pre-period to identify an event-time effect
+# from) are excluded from BOTH sunab() and att_gt() — not just Iowa's
+# treatment reversal, which neither estimator can represent either.
+#
+# Runtime: several minutes, dominated by the wild-cluster bootstrap
+# (~1.5-2 min for one B=999 call over 6,367 fixed-effect levels) and
+# ~10 Callaway-Sant'Anna att_gt() calls across the heterogeneity and
+# robustness sections. Not hung if it takes a while.
 #
 # Usage:
 #   Rscript src/06_estimate.R
@@ -20,15 +29,20 @@ suppressPackageStartupMessages({
   library(data.table)
   library(fixest)
   library(modelsummary)
+  library(did)
+  library(fwildclusterboot)
 })
 
 .args <- commandArgs(trailingOnly = FALSE)
 .script_path <- sub("--file=", "", .args[grep("--file=", .args)])
 root <- normalizePath(file.path(dirname(.script_path), ".."))
 panel_path <- file.path(root, "data", "processed", "panel.csv")
-out_path <- file.path(root, "output", "tables", "estimates_v1.md")
+treatment_path <- file.path(root, "data", "processed", "treatment.csv")
+out_dir <- file.path(root, "output", "tables")
+dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 panel <- fread(panel_path)
+treatment <- fread(treatment_path)
 
 # --- Sample restriction -----------------------------------------------
 # usable: rejected_total/returned_by_voters both present, denominator > 0,
@@ -49,71 +63,312 @@ panel[, fips := as.factor(fips)]
 panel[, year := as.integer(year)]
 panel[, state_abbr := as.factor(state_abbr)]
 
-# --- Model 1: naive TWFE ------------------------------------------------
-# Two-way fixed effects (jurisdiction + year), state-clustered SEs.
-# Known to be biased under staggered adoption with heterogeneous treatment
-# effects (Goodman-Bacon / de Chaisemartin-D'Haultfœuille) — included as
-# the naive baseline this design exists to correct, not as the headline
-# estimate.
-m_twfe <- feols(
-  rejection_rate ~ treated | fips + year,
-  data = panel,
-  cluster = ~state_abbr
-)
+# --- Shared derived variables -------------------------------------------
+# always_treated_states / cohort_by_state come from treatment.csv (the
+# unfiltered truth), used identically by both sunab() and att_gt() below
+# and by every heterogeneity/robustness refit — computed once here so
+# there is exactly one place that could get this wrong, not several.
+always_treated_states <- unique(treatment[, .(all_treated = all(treated == 1)), by = state_abbr][all_treated == TRUE, state_abbr])
+cohort_by_state <- unique(treatment[treated == 1, .(first_year = min(year)), by = state_abbr])
+cohort_by_state <- cohort_by_state[!state_abbr %in% always_treated_states]
 
-# --- Model 2: Sun & Abraham (2021) interaction-weighted estimator ------
-# fixest::sunab() requires a single per-unit adoption cohort (never-treated
-# coded as a sentinel, e.g. Inf or 0) — it cannot represent Iowa's
-# treatment reversal (treated 2018 only, untreated again from 2020). Iowa
-# is therefore EXCLUDED from this model only (kept in the TWFE model
-# above), rather than let sunab() silently misassign it a cohort based on
-# whichever wave happens to average out its 1/0/0/0/0 pattern.
-sunab_data <- panel[state_abbr != "IA"]
-
-# cohort = first treated year, or Inf for never-treated (sunab's convention)
-cohort_by_state <- unique(sunab_data[treated == 1, .(first_year = min(year)), by = state_abbr])
-sunab_data <- merge(sunab_data, cohort_by_state, by = "state_abbr", all.x = TRUE)
-sunab_data[, cohort := ifelse(is.na(first_year), Inf, first_year)]
-
-m_sunab <- feols(
-  rejection_rate ~ sunab(cohort, year) | fips + year,
-  data = sunab_data,
-  cluster = ~state_abbr
-)
-
+# Jurisdiction-size proxy: max returned_by_voters per fips across
+# available waves (same logic 05_build_panel.py's missingness report
+# uses — a jurisdiction's scale doesn't shift enough year to year for
+# this to matter, and using the max avoids a jurisdiction with one
+# missing wave being miscategorized as tiny).
+size_by_fips <- panel[, .(size_proxy = max(returned_by_voters, na.rm = TRUE)), by = fips]
+panel <- merge(panel, size_by_fips, by = "fips")
+panel[, log_ballots := log1p(size_proxy)]
+tercile_cuts <- quantile(size_by_fips$size_proxy, probs = c(1 / 3, 2 / 3), na.rm = TRUE)
+panel[, size_tercile := fifelse(size_proxy <= tercile_cuts[1], "small",
+                          fifelse(size_proxy > tercile_cuts[2], "large", "mid"))]
 cat(sprintf(
-  "sunab() sample excludes Iowa (treatment reversal, not a single cohort): %d states, %d rows\n",
-  uniqueN(sunab_data$state_abbr), nrow(sunab_data)
+  "Size terciles (returned_by_voters, max per fips): small <= %d, large > %d\n",
+  round(tercile_cuts[1]), round(tercile_cuts[2])
 ))
 
-# --- Output ---------------------------------------------------------------
-dir.create(dirname(out_path), showWarnings = FALSE, recursive = TRUE)
+# --- Helper: build the sunab()-ready subset of a given data.table -------
+# Excludes Iowa (reversal) and always-treated states (no pre-period),
+# attaches the treatment.csv-derived cohort, Inf for never-treated.
+make_sunab_data <- function(dt) {
+  d <- dt[!(state_abbr %in% c("IA", always_treated_states))]
+  d <- merge(d, cohort_by_state, by = "state_abbr", all.x = TRUE)
+  d[, cohort := ifelse(is.na(first_year), Inf, first_year)]
+  d
+}
 
+# --- Helper: build the att_gt()-ready subset of a given data.table -------
+# Same exclusions as sunab (Iowa + always-treated); att_gt's own
+# convention is gname=0 for never-treated (not Inf), and idname must be
+# numeric — recomputed fresh per subsample since it's an arbitrary label,
+# not a value that needs to match across calls.
+make_cs_data <- function(dt) {
+  d <- dt[!(state_abbr %in% c("IA", always_treated_states))]
+  d <- merge(d, cohort_by_state, by = "state_abbr", all.x = TRUE)
+  d[, gname := ifelse(is.na(first_year), 0, first_year)]
+  d[, fips_num := as.integer(as.factor(fips))]
+  d
+}
+
+# --- Helper: one-row summary extractor, shared by every model below -----
+one_row <- function(model_label, variant_label, estimate, se, p, n_obs, n_states) {
+  data.table(model = model_label, variant = variant_label, estimate = estimate,
+             se = se, p = p, n_obs = n_obs, n_states = n_states)
+}
+
+fit_twfe <- function(dt, weights_formula = NULL, outcome = "rejection_rate") {
+  fml <- as.formula(sprintf("%s ~ treated | fips + year", outcome))
+  m <- if (is.null(weights_formula)) {
+    feols(fml, data = dt, cluster = ~state_abbr)
+  } else {
+    feols(fml, data = dt, weights = weights_formula, cluster = ~state_abbr)
+  }
+  ct <- m$coeftable["treated", ]
+  list(model = m, row = one_row("TWFE", NA_character_, ct[["Estimate"]], ct[["Std. Error"]],
+                                 ct[["Pr(>|t|)"]], m$nobs, uniqueN(dt$state_abbr)))
+}
+
+fit_sunab <- function(dt, weights_formula = NULL, outcome = "rejection_rate") {
+  d <- make_sunab_data(dt)
+  fml <- as.formula(sprintf("%s ~ sunab(cohort, year) | fips + year", outcome))
+  m <- if (is.null(weights_formula)) {
+    feols(fml, data = d, cluster = ~state_abbr)
+  } else {
+    feols(fml, data = d, weights = weights_formula, cluster = ~state_abbr)
+  }
+  agg <- aggregate(m, agg = "att")
+  list(model = m, row = one_row("Sun-Abraham", NA_character_, agg[1, "Estimate"], agg[1, "Std. Error"],
+                                 agg[1, "Pr(>|t|)"], m$nobs, uniqueN(d$state_abbr)))
+}
+
+fit_cs <- function(dt, weightsname = NULL, biters = 200, outcome = "rejection_rate") {
+  d <- make_cs_data(dt)
+  out <- att_gt(
+    yname = outcome, tname = "year", idname = "fips_num", gname = "gname",
+    xformla = NULL, data = d, panel = TRUE, allow_unbalanced_panel = TRUE,
+    control_group = "nevertreated", clustervars = "state_abbr",
+    weightsname = weightsname, biters = biters, print_details = FALSE
+  )
+  agg <- aggte(out, type = "simple")
+  list(att_gt = out, agg = agg,
+       row = one_row("Callaway-Sant'Anna", NA_character_, agg$overall.att, agg$overall.se,
+                      2 * pnorm(-abs(agg$overall.att / agg$overall.se)), nrow(d), uniqueN(d$state_abbr)))
+}
+
+# ==========================================================================
+# PRIMARY MODELS
+# ==========================================================================
+
+cat("\n== Fitting primary models (TWFE, Sun-Abraham, Callaway-Sant'Anna) ==\n")
+
+twfe_fit <- fit_twfe(panel)
+m_twfe <- twfe_fit$model
+
+sunab_fit <- fit_sunab(panel)
+m_sunab <- sunab_fit$model
+cat(sprintf(
+  "sunab() sample excludes Iowa (treatment reversal) and %d always-treated states (no pre-period): %d states, %d rows\n",
+  length(always_treated_states), sunab_fit$row$n_states, sunab_fit$row$n_obs
+))
+
+cs_fit <- fit_cs(panel, biters = 1000)
+cat(sprintf(
+  "att_gt() sample excludes Iowa and %d always-treated states: %d states, %d rows\n",
+  length(always_treated_states), cs_fit$row$n_states, cs_fit$row$n_obs
+))
+cs_dynamic <- aggte(cs_fit$att_gt, type = "dynamic")
+
+# --- Wild-cluster bootstrap on TWFE's treated coefficient ---------------
+# boottest() errors if feols() internally dropped singleton fixed effects
+# without those rows being excluded from the data first — it won't
+# reconcile a row-count mismatch itself. Refit on the reduced data before
+# bootstrapping (found by smoke-testing this exact model beforehand).
+cat("\n== Wild-cluster bootstrap on TWFE (this is the slow step, ~1-2 min) ==\n")
+drop_idx <- abs(m_twfe$obs_selection$obsRemoved)
+panel_no_singletons <- panel[-drop_idx]
+panel_no_singletons[, fips := droplevels(fips)]
+m_twfe_boot <- feols(rejection_rate ~ treated | fips + year, data = panel_no_singletons, cluster = ~state_abbr)
+set.seed(20260913)
+boot <- boottest(m_twfe_boot, param = "treated", clustid = "state_abbr", B = 999)
+cat(sprintf("Wild-cluster bootstrap: p = %.4f, 95%% CI [%.4f, %.4f]\n",
+            boot$p_val, boot$conf_int[1], boot$conf_int[2]))
+
+# ==========================================================================
+# HETEROGENEITY: jurisdiction size (log ballots returned)
+# ==========================================================================
+# Per-decision: substitutes for the deferred ACS urban/rural split (the
+# fallback HANDOFF.md itself names) rather than a new, unvalidated
+# external dataset this round.
+#
+# TWFE: continuous interaction on the full sample.
+# Sun-Abraham / CS: neither takes an arbitrary covariate interaction the
+# way an OLS formula does — heterogeneity here means a SUBSAMPLE SPLIT
+# (large vs. small jurisdiction tercile), the standard way to get
+# heterogeneity out of an event-study-style estimator, with the same
+# model refit separately per subsample.
+
+cat("\n== Heterogeneity: jurisdiction size ==\n")
+
+m_het_twfe <- feols(rejection_rate ~ treated * log_ballots | fips + year, data = panel, cluster = ~state_abbr)
+het_twfe_row <- one_row("TWFE", "interaction: treated x log_ballots",
+                         m_het_twfe$coeftable["treated:log_ballots", "Estimate"],
+                         m_het_twfe$coeftable["treated:log_ballots", "Std. Error"],
+                         m_het_twfe$coeftable["treated:log_ballots", "Pr(>|t|)"],
+                         m_het_twfe$nobs, uniqueN(panel$state_abbr))
+
+het_rows <- list(het_twfe_row)
+for (grp in c("large", "small")) {
+  sub <- panel[size_tercile == grp]
+  r_sunab <- fit_sunab(sub)$row; r_sunab$variant <- paste0("subsample: ", grp)
+  r_cs <- fit_cs(sub, biters = 200)$row; r_cs$variant <- paste0("subsample: ", grp)
+  het_rows[[length(het_rows) + 1]] <- r_sunab
+  het_rows[[length(het_rows) + 1]] <- r_cs
+}
+heterogeneity_table <- rbindlist(het_rows)
+
+# ==========================================================================
+# ROBUSTNESS CHECKLIST (PROJECT_PLAN.md Week 4): 5 variants x 3 estimators,
+# plus fractional-response GLM (TWFE-only — one of the 5 variants, not a
+# 4th estimator run through everything else).
+# ==========================================================================
+
+cat("\n== Robustness checklist (5 variants x 3 estimators + fractional logit) ==\n")
+
+p99 <- quantile(panel$rejection_rate, 0.99, na.rm = TRUE)
+panel[, rejection_rate_wins := pmin(rejection_rate, p99)]
+cat(sprintf("Winsorizing at p99 = %.4f\n", p99))
+
+robustness_variants <- list(
+  drop_2020 = panel[year != 2020],
+  drop_WI_MI = panel[!(state_abbr %in% c("WI", "MI"))]
+)
+
+rob_rows <- list()
+
+for (variant_name in names(robustness_variants)) {
+  dt <- robustness_variants[[variant_name]]
+  r <- fit_twfe(dt)$row; r$variant <- variant_name; rob_rows[[length(rob_rows) + 1]] <- r
+  r <- fit_sunab(dt)$row; r$variant <- variant_name; rob_rows[[length(rob_rows) + 1]] <- r
+  r <- fit_cs(dt, biters = 200)$row; r$variant <- variant_name; rob_rows[[length(rob_rows) + 1]] <- r
+}
+
+# Winsorized outcome: same three estimators, outcome column swapped.
+r <- fit_twfe(panel, outcome = "rejection_rate_wins")$row; r$variant <- "winsorize_p99"; rob_rows[[length(rob_rows) + 1]] <- r
+r <- fit_sunab(panel, outcome = "rejection_rate_wins")$row; r$variant <- "winsorize_p99"; rob_rows[[length(rob_rows) + 1]] <- r
+r <- fit_cs(panel, biters = 200, outcome = "rejection_rate_wins")$row; r$variant <- "winsorize_p99"; rob_rows[[length(rob_rows) + 1]] <- r
+
+# Weighted by returned_by_voters: TWFE/Sun-Abraham via feols weights=,
+# CS via its own weightsname= argument.
+r <- fit_twfe(panel, weights_formula = ~returned_by_voters)$row; r$variant <- "weight_by_ballots"; rob_rows[[length(rob_rows) + 1]] <- r
+r <- fit_sunab(panel, weights_formula = ~returned_by_voters)$row; r$variant <- "weight_by_ballots"; rob_rows[[length(rob_rows) + 1]] <- r
+r <- fit_cs(panel, weightsname = "returned_by_voters", biters = 200)$row; r$variant <- "weight_by_ballots"; rob_rows[[length(rob_rows) + 1]] <- r
+
+# Fractional-response GLM (TWFE-only): quasi-binomial with returned_by_voters
+# as trial weights (Papke-Wooldridge fractional-response approach).
+m_frac <- feglm(
+  rejection_rate ~ treated | fips + year,
+  data = panel, family = binomial(link = "logit"),
+  weights = ~returned_by_voters, cluster = ~state_abbr
+)
+r <- one_row("TWFE (fractional logit)", "fractional_response",
+             m_frac$coeftable["treated", "Estimate"], m_frac$coeftable["treated", "Std. Error"],
+             m_frac$coeftable["treated", "Pr(>|z|)"], m_frac$nobs, uniqueN(panel$state_abbr))
+rob_rows[[length(rob_rows) + 1]] <- r
+
+robustness_table <- rbindlist(rob_rows)
+
+# ==========================================================================
+# OUTPUT
+# ==========================================================================
+
+# --- estimates_v1.md: primary TWFE / Sun-Abraham / Callaway-Sant'Anna ----
+estimates_out <- file.path(out_dir, "estimates_v1.md")
 modelsummary(
-  list("TWFE (naive)" = m_twfe, "Sun-Abraham (staggered, ex-Iowa)" = m_sunab),
-  output = out_path,
-  title = "Effect of mandatory signature-cure notice laws on mail ballot rejection rate (first cut)",
+  list("TWFE (naive)" = m_twfe, "Sun-Abraham (ex-Iowa, ex-always-treated)" = m_sunab),
+  output = estimates_out,
+  title = "Effect of mandatory signature-cure notice laws on mail ballot rejection rate",
   notes = c(
     "Outcome: jurisdiction-year rejection_rate (rejected_total / returned_by_voters).",
     "Sample: usable, in-scope (50 states + DC) jurisdiction-years, 2016-2024 EAVS waves.",
-    "TWFE clusters SEs by state; Sun-Abraham excludes Iowa (treatment reversal) and averages sunab's cohort x time interactions.",
-    "This is a first-cut estimate. See src/06_estimate.R's header for what is NOT yet included: wild-cluster bootstrap, heterogeneity, and the full robustness checklist."
+    "TWFE clusters SEs by state; Sun-Abraham excludes Iowa (treatment reversal) and always-treated states (no pre-period) and averages sunab's cohort x time interactions.",
+    sprintf("TWFE wild-cluster bootstrap (fwildclusterboot, B=999, clustered by state): p = %.4f, 95%% CI [%.4f, %.4f].", boot$p_val, boot$conf_int[1], boot$conf_int[2]),
+    sprintf("Callaway-Sant'Anna (did::att_gt, same exclusions as Sun-Abraham): overall ATT = %.4f, SE = %.4f, p = %.4f, n = %d states.", cs_fit$row$estimate, cs_fit$row$se, cs_fit$row$p, cs_fit$row$n_states),
+    "See output/tables/heterogeneity.md and output/tables/robustness_checklist.md for the heterogeneity and robustness results."
   )
 )
+cat(sprintf("wrote %s\n", estimates_out))
 
-cat(sprintf("wrote %s\n", out_path))
+# --- heterogeneity.md -----------------------------------------------------
+het_path <- file.path(out_dir, "heterogeneity.md")
+het_lines <- c(
+  "# Heterogeneity by jurisdiction size",
+  "",
+  "Substitutes for the deferred ACS-based urban/rural split (no Census API",
+  "key obtained — see HANDOFF.md). Size proxy: max `returned_by_voters`",
+  "per fips across available waves. TWFE uses a continuous interaction on",
+  "the full sample; Sun-Abraham and Callaway-Sant'Anna (neither of which",
+  "takes an arbitrary covariate interaction) are instead refit separately",
+  sprintf("on the top and bottom size terciles (small <= %d ballots, large > %d ballots).", round(tercile_cuts[1]), round(tercile_cuts[2])),
+  "",
+  "| model | variant | estimate | se | p | n_obs | n_states |",
+  "|---|---|---|---|---|---|---|"
+)
+for (i in seq_len(nrow(heterogeneity_table))) {
+  row <- heterogeneity_table[i]
+  het_lines <- c(het_lines, sprintf("| %s | %s | %.5f | %.5f | %.4f | %s | %d |",
+                                     row$model, row$variant, row$estimate, row$se, row$p,
+                                     format(row$n_obs, big.mark = ","), row$n_states))
+}
+writeLines(het_lines, het_path)
+cat(sprintf("wrote %s\n", het_path))
+
+# --- robustness_checklist.md -----------------------------------------------
+rob_path <- file.path(out_dir, "robustness_checklist.md")
+rob_lines <- c(
+  "# Robustness checklist (PROJECT_PLAN.md Week 4)",
+  "",
+  "5 variants x 3 estimators (TWFE, Sun-Abraham, Callaway-Sant'Anna) where",
+  "each estimator applies naturally, plus a TWFE-only fractional-response",
+  "GLM (quasi-binomial, weighted by returned_by_voters as trial counts —",
+  "this is one of the 5 variants, not a 4th estimator run through",
+  "everything else). Callaway-Sant'Anna uses biters=200 here (vs. 1000 for",
+  "the primary estimate above) to keep runtime bounded across ~8 calls;",
+  "the primary CS estimate is the one to trust for precision, these are",
+  "for checking the sign/magnitude doesn't flip.",
+  "",
+  "| model | variant | estimate | se | p | n_obs | n_states |",
+  "|---|---|---|---|---|---|---|"
+)
+for (i in seq_len(nrow(robustness_table))) {
+  row <- robustness_table[i]
+  rob_lines <- c(rob_lines, sprintf("| %s | %s | %.5f | %.5f | %.4f | %s | %d |",
+                                     row$model, row$variant, row$estimate, row$se, row$p,
+                                     format(row$n_obs, big.mark = ","), row$n_states))
+}
+writeLines(rob_lines, rob_path)
+cat(sprintf("wrote %s\n", rob_path))
+
+# --- Console summary --------------------------------------------------------
 cat("\n--- TWFE ---\n")
 print(summary(m_twfe))
 cat("\n--- Sun-Abraham (aggregated ATT) ---\n")
 print(aggregate(m_sunab, agg = "att"))
+cat("\n--- Callaway-Sant'Anna (overall ATT) ---\n")
+print(cs_fit$agg)
+cat("\n--- Callaway-Sant'Anna (dynamic/event-study aggregation) ---\n")
+print(cs_dynamic)
+cat("\n--- Heterogeneity table ---\n")
+print(heterogeneity_table)
+cat("\n--- Robustness checklist ---\n")
+print(robustness_table)
 
-# TODO(Week 4 part 2), per PROJECT_PLAN.md / HANDOFF.md next steps:
-#   - fwildclusterboot wild-cluster bootstrap (only ~50 effective clusters).
-#   - Callaway-Sant'Anna via the `did` package, as a second corrected
-#     estimator alongside sunab(), with the difference from TWFE explained.
-#   - Heterogeneity: interact treated with log(ballots returned) and an
-#     urban/rural classification (see HANDOFF.md's ACS caveat for how to
-#     get the latter without live Census data).
-#   - Robustness: drop 2020; drop WI/MI (municipality/township-level
-#     reporting); winsorize rejection_rate at p99; weight by
-#     returned_by_voters; fractional logit vs. linear specification.
+# TODO(future work, not in this round's scope):
+#   - Sun-Abraham has no native bootstrap for its post-aggregation ATT
+#     object (fwildclusterboot doesn't support that class) — it keeps its
+#     analytic cluster-robust SE while TWFE gets the wild bootstrap and
+#     Callaway-Sant'Anna uses did's own native multiplier bootstrap
+#     (bstrap=TRUE, the default used throughout this script). Documented
+#     asymmetry, not an oversight — resolving it would mean hand-rolling
+#     a bootstrap over sunab()'s aggregate() call.
+#   - Week 5 dashboard, once this round's results are reviewed.

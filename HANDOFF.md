@@ -62,13 +62,21 @@ below. `07_figures.py` is still unwritten — Week 5.)
 
 **First-cut estimates already exist** (`output/tables/estimates_v1.md`):
 naive TWFE gives an imprecise near-null (-0.0014, SE 0.0026, p=0.59);
-Sun-Abraham's aggregated ATT is positive and marginally significant
-(+0.0037, SE 0.0018, p=0.051) — the corrected estimator flips the sign
-relative to naive TWFE, which is exactly the divergence this design
-exists to surface. **Do not treat this as a finding yet** — no
-wild-cluster bootstrap, no robustness checks, no heterogeneity. See
+Sun-Abraham's aggregated ATT (37 states — excludes Iowa and the 13
+always-treated states, which have no pre-period to identify an
+event-time effect from) is +0.0024, SE 0.0025, p=0.34 — also a clean
+null, same direction as TWFE. **Do not treat this as a finding yet** —
+no wild-cluster bootstrap, no robustness checks, no heterogeneity. See
 `06_estimate.R`'s own `TODO` block and "Next steps" below for exactly
 what's still missing before this is citable.
+
+*(An earlier version of this section reported "+0.0037, p=0.051" as
+"marginally significant" and framed it as the corrected estimator
+flipping TWFE's sign. That was wrong — `06_estimate.R` had a bug
+[VALIDATION_REPORT.md Defect 1] that derived the Sun-Abraham cohort from
+the filtered estimation sample rather than `treatment.csv`, silently
+fabricating a 2018 treatment event for always-treated Vermont. Fixed;
+the number above is the corrected one.)*
 
 Verified facts, so nobody has to re-derive them:
 - All five national rejected-ballot totals reproduce **exactly**:
@@ -118,12 +126,19 @@ each, with a `first_treated_wave`, `mechanism`, `confidence`, and sourced
   drop these as "already treated," but they're not useless: still usable
   in the naive TWFE comparison, and as a sanity check): AZ, CO, FL, GA,
   IL, MA, MN, MT, NM, OH, OR, VT, WA
-- **17 never-treated controls**: AK, AL, AR, CT, ID, IA, MO, NE, NH, NC,
+- **17 never-treated controls**: AK, AL, AR, CT, ID, MO, NE, NH, NC,
   OK, SC, SD, TN, WV, WI, WY
-- **2 special cases, not simple values**: DE (adoption falls right at or
-  past the 2024 panel edge — treat as outside panel), PA (no statewide
-  law; county-optional, needs a state-vs-jurisdiction-level design
-  decision before it enters anything)
+- **3 special cases, not simple values** — **do not treat any of these
+  as a clean control or a clean switcher without reading the caveat
+  below first** (VALIDATION_REPORT.md Defect 2: an earlier draft of
+  this list put Iowa in the never-treated bucket above, contradicting
+  the Caveats section below and the code — fixed):
+  - **Iowa** — treated for the 2018 wave only, then reverts (see Caveats
+    below); not never-treated, not a normal switcher either.
+  - **DE** (adoption falls right at or past the 2024 panel edge — treat
+    as outside panel).
+  - **PA** (no statewide law; county-optional, needs a state-vs-
+    jurisdiction-level design decision before it enters anything).
 
 **This is a usable staggered-adoption design** — four real cohorts, a
 meaningful control group, adoption timing that clusters around 2020 (the

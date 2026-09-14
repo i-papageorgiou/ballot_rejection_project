@@ -59,6 +59,9 @@ Python steps above need `pandas`/`pyarrow`; this repo was built and
 verified against the anaconda distribution's `python3`, not the system
 one — if `import pyarrow` fails, check which `python3` is on `PATH`.
 
+All of the above, chained: `bash run_all.sh` (set `PYTHON=/path/to/python3`
+first if the anaconda interpreter isn't the first `python3` on `PATH`).
+
 ## Repository structure
 
 ```
