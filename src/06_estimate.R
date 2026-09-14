@@ -17,10 +17,12 @@
 # from) are excluded from BOTH sunab() and att_gt() — not just Iowa's
 # treatment reversal, which neither estimator can represent either.
 #
-# Runtime: several minutes, dominated by the wild-cluster bootstrap
-# (~1.5-2 min for one B=999 call over 6,367 fixed-effect levels) and
-# ~10 Callaway-Sant'Anna att_gt() calls across the heterogeneity and
-# robustness sections. Not hung if it takes a while.
+# Runtime: ~25-30 minutes total, dominated by the wild-cluster bootstrap
+# (measured ~19-20 min for one B=999 call over 6,367 fixed-effect levels
+# on this machine — much slower than fwildclusterboot's own docs would
+# suggest, possibly memory-pressure-dependent; budget accordingly, it is
+# not hung) plus ~10 Callaway-Sant'Anna att_gt() calls across the
+# heterogeneity and robustness sections (seconds each, not the bottleneck).
 #
 # Usage:
 #   Rscript src/06_estimate.R
@@ -179,18 +181,48 @@ cat(sprintf(
 ))
 cs_dynamic <- aggte(cs_fit$att_gt, type = "dynamic")
 
+# --- Pre-trend check on the dynamic aggregation --------------------------
+# cs_dynamic$egt are the event-times, with pre-period ones negative.
+# cs_dynamic$att.egt / se.egt / crit.val.egt give the SIMULTANEOUS
+# confidence band did already computes (not a per-point band) — a
+# pre-period point whose band excludes 0 is a real parallel-trends
+# concern, not noise inflated by uncorrected multiple comparisons, since
+# the simultaneity correction already accounts for testing several
+# event-times at once.
+pre_idx <- which(cs_dynamic$egt < 0)
+pre_lo <- cs_dynamic$att.egt[pre_idx] - cs_dynamic$crit.val.egt * cs_dynamic$se.egt[pre_idx]
+pre_hi <- cs_dynamic$att.egt[pre_idx] + cs_dynamic$crit.val.egt * cs_dynamic$se.egt[pre_idx]
+pre_violation <- pre_idx[pre_lo > 0 | pre_hi < 0]
+if (length(pre_violation) > 0) {
+  pretrend_note <- sprintf(
+    "PRE-TREND WARNING: event-time(s) %s show a simultaneous 95%% confidence band that excludes 0 in the PRE-treatment period — a real parallel-trends concern for the Callaway-Sant'Anna design, not just noise (the band already corrects for testing multiple event-times at once). Not resolved in this round; a design that relies on parallel trends should not be treated as validated until this is investigated further.",
+    paste(cs_dynamic$egt[pre_violation], collapse = ", ")
+  )
+} else {
+  pretrend_note <- "No pre-treatment event-time shows a simultaneous confidence band excluding 0 — no pre-trend violation detected."
+}
+cat("\n", pretrend_note, "\n", sep = "")
+
 # --- Wild-cluster bootstrap on TWFE's treated coefficient ---------------
 # boottest() errors if feols() internally dropped singleton fixed effects
 # without those rows being excluded from the data first — it won't
 # reconcile a row-count mismatch itself. Refit on the reduced data before
 # bootstrapping (found by smoke-testing this exact model beforehand).
-cat("\n== Wild-cluster bootstrap on TWFE (this is the slow step, ~1-2 min) ==\n")
+cat("\n== Wild-cluster bootstrap on TWFE (this is the slow step, ~20 min on this machine) ==\n")
 drop_idx <- abs(m_twfe$obs_selection$obsRemoved)
 panel_no_singletons <- panel[-drop_idx]
 panel_no_singletons[, fips := droplevels(fips)]
-m_twfe_boot <- feols(rejection_rate ~ treated | fips + year, data = panel_no_singletons, cluster = ~state_abbr)
+# boottest()'s internal grouping (fwildclusterboot's fsum.default) errors on
+# a factor cluster column ("length(g) must match length(x)") in a way it
+# doesn't on a plain character one — pass a character copy specifically for
+# the bootstrap call, even though `state_abbr` is a factor everywhere else
+# in this script (feols/sunab/att_gt all handle the factor version fine;
+# this is a fwildclusterboot-specific quirk, confirmed by reproducing the
+# crash and fixing it here).
+panel_no_singletons[, state_abbr_chr := as.character(state_abbr)]
+m_twfe_boot <- feols(rejection_rate ~ treated | fips + year, data = panel_no_singletons, cluster = ~state_abbr_chr)
 set.seed(20260913)
-boot <- boottest(m_twfe_boot, param = "treated", clustid = "state_abbr", B = 999)
+boot <- boottest(m_twfe_boot, param = "treated", clustid = "state_abbr_chr", B = 999)
 cat(sprintf("Wild-cluster bootstrap: p = %.4f, 95%% CI [%.4f, %.4f]\n",
             boot$p_val, boot$conf_int[1], boot$conf_int[2]))
 
@@ -294,6 +326,7 @@ modelsummary(
     "TWFE clusters SEs by state; Sun-Abraham excludes Iowa (treatment reversal) and always-treated states (no pre-period) and averages sunab's cohort x time interactions.",
     sprintf("TWFE wild-cluster bootstrap (fwildclusterboot, B=999, clustered by state): p = %.4f, 95%% CI [%.4f, %.4f].", boot$p_val, boot$conf_int[1], boot$conf_int[2]),
     sprintf("Callaway-Sant'Anna (did::att_gt, same exclusions as Sun-Abraham): overall ATT = %.4f, SE = %.4f, p = %.4f, n = %d states.", cs_fit$row$estimate, cs_fit$row$se, cs_fit$row$p, cs_fit$row$n_states),
+    pretrend_note,
     "See output/tables/heterogeneity.md and output/tables/robustness_checklist.md for the heterogeneity and robustness results."
   )
 )
@@ -310,6 +343,17 @@ het_lines <- c(
   "the full sample; Sun-Abraham and Callaway-Sant'Anna (neither of which",
   "takes an arbitrary covariate interaction) are instead refit separately",
   sprintf("on the top and bottom size terciles (small <= %d ballots, large > %d ballots).", round(tercile_cuts[1]), round(tercile_cuts[2])),
+  "",
+  "CAVEAT: the large and small subsamples are NOT the same set of states —",
+  "terciles are computed over individual jurisdictions, and some states have",
+  "no jurisdictions in one tercile or the other (n_states differs: large vs.",
+  "small subsamples do not share a common state universe). Sun-Abraham and",
+  "Callaway-Sant'Anna also DISAGREE here: Sun-Abraham finds a significant",
+  "positive effect in the large subsample (p<0.05) and a null in the small",
+  "one, while Callaway-Sant'Anna finds the opposite pattern (null in large,",
+  "significant negative in small, p<0.001). Not resolved this round — read",
+  "as \"heterogeneity is not conclusively established, the two corrected",
+  "estimators do not corroborate each other,\" not as a confirmed effect.",
   "",
   "| model | variant | estimate | se | p | n_obs | n_states |",
   "|---|---|---|---|---|---|---|"
@@ -340,11 +384,25 @@ rob_lines <- c(
   "| model | variant | estimate | se | p | n_obs | n_states |",
   "|---|---|---|---|---|---|---|"
 )
+unstable_flag <- rep("", nrow(robustness_table))
+unstable_flag[robustness_table$se > 1] <- " **"
 for (i in seq_len(nrow(robustness_table))) {
   row <- robustness_table[i]
-  rob_lines <- c(rob_lines, sprintf("| %s | %s | %.5f | %.5f | %.4f | %s | %d |",
-                                     row$model, row$variant, row$estimate, row$se, row$p,
+  rob_lines <- c(rob_lines, sprintf("| %s | %s | %.5f | %.5f%s | %.4f | %s | %d |",
+                                     row$model, row$variant, row$estimate, row$se, unstable_flag[i], row$p,
                                      format(row$n_obs, big.mark = ","), row$n_states))
+}
+if (any(unstable_flag != "")) {
+  rob_lines <- c(rob_lines, "",
+    "** NUMERICALLY UNSTABLE, not a real result: raw returned_by_voters",
+    "weighting combined with sunab()'s many interaction dummies produces a",
+    "near-singular weighted design for at least one cohort x time cell —",
+    "traced to extreme weight variance (median ~210 ballots, max ~3.4",
+    "million, a statewide-aggregate row) that TWFE and Callaway-Sant'Anna's",
+    "weighted variants tolerate but the interacted Sun-Abraham spec does",
+    "not. The point estimate may still be informative; the SE/p-value are",
+    "not — do not cite this cell's significance either way."
+  )
 }
 writeLines(rob_lines, rob_path)
 cat(sprintf("wrote %s\n", rob_path))

@@ -14,16 +14,21 @@ by jurisdiction size? Staggered difference-in-differences, EAVS
 administrative data, 2016–2024.
 
 **Status**: Weeks 1–3 done (data pipeline, panel, treatment coding, three
-rounds of independent validation). Week 4 part 1 is now also done: the
-treatment coding is joined to the panel (`src/04_build_treatment.py` +
-an update to `src/05_build_panel.py`), and a first-cut estimation script
-(`src/06_estimate.R`) produces a preliminary TWFE-vs-Sun-Abraham
-comparison (`output/tables/estimates_v1.md`). **This is a first cut, not
-a robustness-checked result** — no wild-cluster bootstrap, no
-heterogeneity, none of the robustness checklist yet (see "Next steps"
-below, which is now shorter than it was). Week 5 (an interactive
-dashboard — the deliverable changed from a static writeup partway
-through; see `PROJECT_PLAN.md`) is further out.
+rounds of independent validation). Week 4 is now fully done: the
+treatment coding is joined to the panel, and `src/06_estimate.R` produces
+TWFE, Sun-Abraham, and Callaway-Sant'Anna estimates plus a wild-cluster
+bootstrap, heterogeneity by jurisdiction size, and a 5-item robustness
+checklist re-run through all three estimators. **All three estimators
+agree the headline effect is a clean null — and two caveats that
+surfaced along the way have since been investigated and diagnosed (not
+fixed, and not fixable — see below): a pre-trend narrowed down to one
+specific cohort, and a heterogeneity result now understood to be
+unidentifiable with the current cohort coverage, not just uncertain.**
+See "First-cut estimates" below and `PROJECT_PLAN.md`'s Week 4 section
+for the full diagnosis — read them before using either result, but
+there's nothing further to chase on either one without new data. Week 5
+(an interactive dashboard — the deliverable changed from a static
+writeup partway through; see `PROJECT_PLAN.md`) is next.
 
 **Read in this order**:
 1. `PROJECT_PLAN.md` — the living plan; every week's section was updated
@@ -49,8 +54,12 @@ python src/03_clean_eavs.py       # clean + validate each wave -> data/interim/,
 pytest tests/                     # independent check on the above, from outside the pipeline's own gate
 python src/04_build_treatment.py  # code the 51-state treatment variable -> data/processed/treatment.csv
 python src/05_build_panel.py      # stack into panel + join treatment -> data/processed/panel.{parquet,csv}, output/tables/missingness_report.md
-Rscript src/06_estimate.R          # first-cut TWFE vs. Sun-Abraham estimates -> output/tables/estimates_v1.md
+Rscript src/06_estimate.R          # TWFE, Sun-Abraham, Callaway-Sant'Anna, bootstrap, heterogeneity, robustness -> output/tables/{estimates_v1,heterogeneity,robustness_checklist}.md
 ```
+
+`06_estimate.R` takes **~25-30 minutes** (the wild-cluster bootstrap alone
+is ~20 min on the machine this was built on — not hung, see the script's
+own header comment) — don't assume it's stuck if it runs a while.
 
 Note: the Python steps need `pyarrow`; this project was built and
 verified against the anaconda distribution's `python3`, not whatever
@@ -60,15 +69,51 @@ verified against the anaconda distribution's `python3`, not whatever
 ever built — `04` went to the treatment coding instead; see Caveats
 below. `07_figures.py` is still unwritten — Week 5.)
 
-**First-cut estimates already exist** (`output/tables/estimates_v1.md`):
-naive TWFE gives an imprecise near-null (-0.0014, SE 0.0026, p=0.59);
-Sun-Abraham's aggregated ATT (37 states — excludes Iowa and the 13
-always-treated states, which have no pre-period to identify an
-event-time effect from) is +0.0024, SE 0.0025, p=0.34 — also a clean
-null, same direction as TWFE. **Do not treat this as a finding yet** —
-no wild-cluster bootstrap, no robustness checks, no heterogeneity. See
-`06_estimate.R`'s own `TODO` block and "Next steps" below for exactly
-what's still missing before this is citable.
+**Estimates exist and are now bootstrap/robustness-checked**
+(`output/tables/estimates_v1.md`): naive TWFE gives an imprecise
+near-null (-0.0014, SE 0.0026, p=0.59, wild-cluster bootstrap p=0.6166 —
+confirms the analytic SE); Sun-Abraham's aggregated ATT (37 states —
+excludes Iowa and the 13 always-treated states) is +0.0024, SE 0.0025,
+p=0.34; Callaway-Sant'Anna's overall ATT (same 37-state exclusion) is
+-0.0045, SE 0.0036, p=0.22. **All three estimators independently give a
+clean null** — this is the strongest form of "no effect detected" this
+project can currently support, not a weakness of any one method.
+
+**Two things surfaced by this round — investigated via `did::att_gt`'s
+raw group-time ATT table (`out$group/t/att/se`, available before
+`aggte()` aggregates it) and diagnosed, not resolved (neither has a
+mechanical fix; both are genuine limitations of the current data)**:
+1. **The pre-trend traces to one specific cohort, not a broad design
+   flaw.** The event-time -6 signal is exactly one of 16 group-time
+   cells: group=2024 (DC, MD, MI) vs. controls at t=2018, att=-0.0089,
+   SE=0.0023. Confirmed not a DC artifact (excluding DC alone moves the
+   estimate only to -0.0092) — Maryland and Michigan carry this.
+   Confirmed not resolved by allowing anticipation (`anticipation=2`
+   still leaves it significant). **This is a genuine, unexplained
+   pre-existing difference specific to MD/MI predating their 2024
+   treatment by 6 years.** Any conclusion leaning on the 2024 cohort
+   should carry this caveat explicitly; it is not evidence the whole
+   panel violates parallel trends.
+2. **Heterogeneity by jurisdiction size is unidentifiable with the
+   current cohort coverage, not just uncertain.** Two confirmed reasons:
+   (a) the small-jurisdiction subsample has **no 2018 or 2024 cohort at
+   all** (only 2020/2022 survive the size filter, 9 treated states
+   total), and one of its cells is an outlier by an order of magnitude
+   (att=-0.045, SE=0.0215, vs. everything else under 0.012); (b) the
+   large-jurisdiction subsample's own cohort-level effects **flip sign
+   across periods within the same cohort** (2024 cohort: +0.0162 then
+   -0.0038 at the next period) — Sun-Abraham's interaction-weighted and
+   Callaway-Sant'Anna's group-size-weighted averaging aren't guaranteed
+   to agree when the underlying effects are this heterogeneous, so their
+   disagreement here is expected, not a bug in either estimator. See
+   `output/tables/heterogeneity.md`. **Read as "not establishable with
+   this design," not as evidence for either estimator's pattern.**
+
+One lower-stakes numerical wrinkle: the Sun-Abraham weighted-by-ballots
+robustness cell has SE=265 (broken, not a real null) — `returned_by_voters`'
+extreme range (median ~210, max ~3.4M) breaks the interacted model's
+weighted variance; TWFE and CS tolerate the same weights fine. Flagged
+in `output/tables/robustness_checklist.md`, not silently reported.
 
 *(An earlier version of this section reported "+0.0037, p=0.051" as
 "marginally significant" and framed it as the corrected estimator
@@ -225,27 +270,23 @@ report:
 1. ~~Build the treatment-panel join.~~ **Done** — `src/04_build_treatment.py`
    + the updated `src/05_build_panel.py`. Iowa is handled as a
    time-varying per-wave column, not a scalar.
-2. ~~First-cut `src/06_estimate.R`~~ **Done, but incomplete** — naive TWFE
-   and `fixest::sunab()` run side by side (Iowa excluded from the `sunab`
-   sample only, since a single reversal doesn't fit its single-cohort
-   assumption). Not yet done, and the actual next task:
-   - **`fwildclusterboot`** wild-cluster bootstrap — only ~50 effective
-     (state) clusters, and the current SEs are the default
-     cluster-robust ones, not bootstrapped.
-   - **Callaway–Sant'Anna via the `did` package**, as a second corrected
-     estimator alongside `sunab()`, with the TWFE-vs-corrected gap
-     explained — this comparison is the actual point of the design.
-3. **Heterogeneity**: interact treatment with log(ballots returned) and
-   an urban/rural classification (see ACS caveat above for how to get the
-   latter without live Census data).
-4. **Robustness checklist** (already specified in `PROJECT_PLAN.md`'s
-   Week 4 section): drop 2020; drop WI/MI (municipality/township-level
-   reporting, thousands of small jurisdictions); winsorize at p99; weight
-   by ballots returned; fractional logit vs. linear.
-5. **Week 5 — dashboard**, once the estimate is robustness-checked: event
-   study, coefficient plot, rejection-rate distribution by state, county
-   choropleth (`geopandas`, already working in this environment). The
-   deliverable is an interactive dashboard, not a static writeup — see
+2. ~~Estimation: TWFE, Sun-Abraham, Callaway-Sant'Anna, wild-cluster
+   bootstrap, heterogeneity, robustness checklist.~~ **Done** — all in
+   `src/06_estimate.R`. All three estimators agree on a clean null.
+3. ~~Investigate the pre-trend flag and the heterogeneity disagreement.~~
+   **Done — both diagnosed, neither has a mechanical fix.** The pre-trend
+   traces to one cohort (MD/MI, event-time -6) and doesn't resolve under
+   anticipation periods; the heterogeneity disagreement traces to the
+   small-jurisdiction subsample missing two whole cohorts plus real
+   cross-cohort sign-flipping in the large subsample. See the caveat
+   block above and `PROJECT_PLAN.md`'s Week 4 section for the full
+   diagnosis with exact cells/states. **There is nothing further to chase
+   on either one without new data** — the correct next step is to carry
+   both forward as documented limitations, not to keep investigating.
+4. **Week 5 — dashboard**: event study, coefficient
+   plot, rejection-rate distribution by state, county choropleth
+   (`geopandas`, already working in this environment). The deliverable
+   is an interactive dashboard, not a static writeup — see
    `PROJECT_PLAN.md`'s Week 5 section for why that changed and what it
    implies for the build.
 

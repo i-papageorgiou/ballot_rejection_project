@@ -37,7 +37,7 @@ echo "== 5/7: code the 51-state treatment variable =="
 echo "== 6/7: stack panel + join treatment =="
 "$PYTHON" src/05_build_panel.py
 
-echo "== 7/7: first-cut TWFE vs. Sun-Abraham estimates =="
+echo "== 7/7: TWFE, Sun-Abraham, Callaway-Sant'Anna, bootstrap, heterogeneity, robustness (~25-30 min, dominated by the wild-cluster bootstrap step) =="
 Rscript src/06_estimate.R
 
-echo "== done: data/processed/panel.{parquet,csv}, output/tables/estimates_v1.md =="
+echo "== done: data/processed/panel.{parquet,csv}, output/tables/{estimates_v1,heterogeneity,robustness_checklist}.md =="
