@@ -1,1 +1,25 @@
 .DS_Store
+
+# Reproducible from src/01_download.py and src/03_clean_eavs.py
+# respectively — PROJECT_PLAN.md always intended these excluded; never
+# enforced until now. data/processed/ stays committed on purpose (see
+# README.md: a reviewer cloning the repo shouldn't have to re-download
+# or re-clean just to run the estimation).
+data/raw/
+data/interim/
+
+# Python / R build noise
+__pycache__/
+*.pyc
+.pytest_cache/
+.Rhistory
+
+# Claude Code local session/tool state — never project content
+.claude/
+
+# Process/planning documentation, untracked at the user's request —
+# kept locally, not published to GitHub.
+PROJECT_PLAN.md
+HANDOFF.md
+Project_Handoff_Ballot_Rejection_Analysis.md
+VALIDATION_REPORT.md
