@@ -44,7 +44,7 @@ PROCESSED = ROOT / "data" / "processed"
 TREATMENT_PATH = PROCESSED / "treatment.csv"
 MISSINGNESS_REPORT = ROOT / "output" / "tables" / "missingness_report.md"
 
-WAVES = (2016, 2018, 2020, 2022, 2024)
+WAVES = (2014, 2016, 2018, 2020, 2022, 2024)
 
 # EAVS covers 50 states + DC + 5 U.S. territories; the policy coding sheet
 # (and the underlying legal-research question) only covers the 51 states +

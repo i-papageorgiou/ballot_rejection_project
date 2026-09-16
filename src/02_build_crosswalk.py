@@ -110,6 +110,28 @@ def parse_wave(year: int) -> dict:
 def main() -> None:
     entries = []
 
+    # 2014: no machine-readable codebook (PDF only, like 2016); mapping
+    # confirmed directly against the codebook text (pdftotext-extracted,
+    # since WebFetch's summarizer could not read it) and cross-checked
+    # against the EAC's own published national figures (268,720 rejected,
+    # 18,968,173 counted — both matched an independent raw-file sum
+    # exactly). QC4_Total ("total ... returned by voters and submitted
+    # for counting") exists but is far less complete than QC4a/QC4b, so
+    # 03_clean_eavs.py derives returned_by_voters as counted+rejected
+    # instead of using this column directly — see that script's
+    # clean_wave() for the empirical justification. Reason codes QC5a-v
+    # mirror 2016's C5a-v exactly (same 22-letter range), reinforcing
+    # that 2014 and 2016 share the same underlying survey taxonomy.
+    entries.append({
+        "wave": 2014,
+        "source": "empirically verified (codebook PDF + EAC national totals; see PROJECT_PLAN.md)",
+        "transmitted_total": "QC1_Total",
+        "returned_by_voters": "QC4_Total",
+        "counted_total": "QC4a",
+        "rejected_total": "QC4b",
+        "rejection_reasons": [f"QC5{c}" for c in "abcdefghijklmnopqrstuv"],
+    })
+
     # 2016: no machine-readable codebook; use the verified mapping.
     # See codebooks/eavs_variable_crosswalk.md for the derivation
     # (C4b correlates 0.9927 with the sum of the C5a-C5v rejection-reason
@@ -136,6 +158,7 @@ def main() -> None:
 
     print(f"wrote {OUT}\n")
     expected = {
+        2014: dict(returned_by_voters="QC4_Total", rejected_total="QC4b", n_reasons=22),
         2016: dict(returned_by_voters="C1b", rejected_total="C4b", n_reasons=22),
         2018: dict(returned_by_voters="C1b", rejected_total="C4a", n_reasons=17),
         2020: dict(returned_by_voters="C1b", rejected_total="C4a", n_reasons=17),

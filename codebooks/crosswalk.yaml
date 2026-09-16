@@ -1,4 +1,33 @@
 waves:
+- wave: 2014
+  source: empirically verified (codebook PDF + EAC national totals; see PROJECT_PLAN.md)
+  transmitted_total: QC1_Total
+  returned_by_voters: QC4_Total
+  counted_total: QC4a
+  rejected_total: QC4b
+  rejection_reasons:
+  - QC5a
+  - QC5b
+  - QC5c
+  - QC5d
+  - QC5e
+  - QC5f
+  - QC5g
+  - QC5h
+  - QC5i
+  - QC5j
+  - QC5k
+  - QC5l
+  - QC5m
+  - QC5n
+  - QC5o
+  - QC5p
+  - QC5q
+  - QC5r
+  - QC5s
+  - QC5t
+  - QC5u
+  - QC5v
 - wave: 2016
   source: empirically verified (see eavs_variable_crosswalk.md)
   transmitted_total: C1a

@@ -23,7 +23,7 @@ RAW = ROOT / "data" / "raw"
 INTERIM = ROOT / "data" / "interim"
 CROSSWALK_PATH = ROOT / "codebooks" / "crosswalk.yaml"
 
-WAVES = (2016, 2018, 2020, 2022, 2024)
+WAVES = (2014, 2016, 2018, 2020, 2022, 2024)
 
 
 @pytest.fixture(scope="session")

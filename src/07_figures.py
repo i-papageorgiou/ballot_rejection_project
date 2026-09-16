@@ -36,7 +36,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PANEL_PATH = ROOT / "data" / "processed" / "panel.parquet"
 DOCS_DATA = ROOT / "docs" / "data"
 
-WAVES = (2016, 2018, 2020, 2022, 2024)
+WAVES = (2014, 2016, 2018, 2020, 2022, 2024)
 
 # The 7 states confirmed to report at town/municipality level, not
 # county — see module docstring for the verification method.

@@ -47,13 +47,31 @@ ROOT = Path(__file__).resolve().parent.parent
 PROCESSED = ROOT / "data" / "processed"
 OUT_PATH = PROCESSED / "treatment.csv"
 
-WAVES = (2016, 2018, 2020, 2022, 2024)
+WAVES = (2014, 2016, 2018, 2020, 2022, 2024)
 
 # ---------------------------------------------------------------------------
 # Transcribed from codebooks/policy_coding_sheet.md's "Final coding table"
 # (all 51 units), row by row. `first_treated_wave` is one of:
 #   - an int in WAVES:  treated from that wave onward
-#   - "pre-2016":       treated in every wave (always-treated in-panel)
+#   - "pre-2016":       treated in every wave, INCLUDING 2014 — the label is
+#                        historical (from when 2016 was the panel's first
+#                        wave) and now really means "predates the panel
+#                        entirely." Re-verified state-by-state when 2014 was
+#                        added (see PROJECT_PLAN.md's "Extend the panel
+#                        backward" section): every remaining "pre-2016" row's
+#                        own cited evidence (FL 2001, GA 2010, MN's statute
+#                        already being amended in 2013, MT 1979, NM 1969,
+#                        OR 1998, VT 1977) predates 2014 too, and the
+#                        inferred rows (AZ, IL, MA, OH — no exact date) have
+#                        no evidence suggesting a 2014-2016 adoption
+#                        specifically, so the inference extends cleanly.
+#                        Two rows had a real resolution instead of just a
+#                        recheck: CO (HB13-1303, 2013) and WA (2011 c.10,
+#                        effective 8/24/2011) both have an exact date inside
+#                        the newly-visible 2010-2014 window and are now
+#                        coded `first_treated_wave=2014` below, not
+#                        "pre-2016" — real new switcher cohorts, not just
+#                        relabeled always-treated states.
 #   - "never":          untreated in every wave
 # `mechanism` and `confidence` are carried through unchanged from the sheet.
 # ---------------------------------------------------------------------------
@@ -63,7 +81,8 @@ TREATMENT: dict[str, dict] = {
     "AZ": dict(first_treated_wave="pre-2016", mechanism="statute", confidence="High"),
     "AR": dict(first_treated_wave="never", mechanism="none", confidence="Medium"),
     "CA": dict(first_treated_wave=2018, mechanism="statute", confidence="High"),
-    "CO": dict(first_treated_wave="pre-2016", mechanism="statute", confidence="High"),
+    "CO": dict(first_treated_wave=2014, mechanism="statute", confidence="High",
+               notes="Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."),
     "CT": dict(first_treated_wave="never", mechanism="statute", confidence="High",
                notes="Law enacted 2026 (Public Act 26-42) — postdates the panel entirely."),
     "DE": dict(first_treated_wave="never", mechanism="statute", confidence="Medium",
@@ -80,7 +99,7 @@ TREATMENT: dict[str, dict] = {
     # Iowa: explicit per-wave override, not a scalar — see module docstring.
     "IA": dict(
         first_treated_wave=None,
-        per_wave={2016: 0, 2018: 1, 2020: 0, 2022: 0, 2024: 0},
+        per_wave={2014: 0, 2016: 0, 2018: 1, 2020: 0, 2022: 0, 2024: 0},
         mechanism="statute, then enjoined",
         confidence="Medium",
         notes="Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).",
@@ -130,7 +149,8 @@ TREATMENT: dict[str, dict] = {
     "UT": dict(first_treated_wave=2020, mechanism="statute", confidence="High"),
     "VT": dict(first_treated_wave="pre-2016", mechanism="statute", confidence="High"),
     "VA": dict(first_treated_wave=2020, mechanism="statute", confidence="High"),
-    "WA": dict(first_treated_wave="pre-2016", mechanism="statute", confidence="High"),
+    "WA": dict(first_treated_wave=2014, mechanism="statute", confidence="High",
+               notes="Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."),
     "WV": dict(first_treated_wave="never", mechanism="none", confidence="Medium"),
     "WI": dict(first_treated_wave="never", mechanism="discretionary", confidence="High",
                notes='Clerks "may" return a defective ballot for correction; no uniform mandate.'),

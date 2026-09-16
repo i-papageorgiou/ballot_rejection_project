@@ -50,13 +50,18 @@ INTERIM = ROOT / "data" / "interim"
 CROSSWALK_PATH = ROOT / "codebooks" / "crosswalk.yaml"
 VALIDATION_REPORT = ROOT / "output" / "tables" / "validation_report.md"
 
-WAVES = (2016, 2018, 2020, 2022, 2024)
+WAVES = (2014, 2016, 2018, 2020, 2022, 2024)
 COUNT_COLS = ["transmitted_total", "returned_by_voters", "counted_total", "rejected_total"]
 
 # National rejected-ballot totals as published by the EAC, verified against
 # the raw files (see PROJECT_PLAN.md). Regression-test fixtures: if a
 # refactor changes these, something in the cleaning path broke.
+# 2014: confirmed exactly against the EAC's own 2014 Comprehensive Report
+# ("States reported counting 18,968,173 ... and rejecting 268,720") — an
+# independent raw-sum of QC4b matched this exactly before any cleaning
+# logic was written, the same standard every other wave was held to.
 EXPECTED_NATIONAL_TOTAL = {
+    2014: 268_720,
     2016: 318_728,
     2018: 430_196,
     2020: 560_826,
@@ -81,6 +86,10 @@ def load_crosswalk() -> dict[int, dict]:
 
 
 def _load_raw(year: int) -> pd.DataFrame:
+    if year == 2014:
+        # 2014 ships as .xlsx (Section C only — see 01_download.py), not a
+        # CSV, so neither the encoding= arg nor low_memory applies.
+        return pd.read_excel(RAW / "eavs_2014.xlsx", dtype=str)
     return pd.read_csv(RAW / f"eavs_{year}.csv", encoding="latin-1", dtype=str, low_memory=False)
 
 
@@ -90,6 +99,41 @@ def _clean_numeric(s: pd.Series) -> pd.Series:
     then catches 2018-2024's numeric -88/-99."""
     v = pd.to_numeric(s, errors="coerce")
     return v.mask(v < 0)
+
+
+def _aggregate_2014_wi_wards(raw: pd.DataFrame, cw: dict) -> pd.DataFrame:
+    """2014 reports Wisconsin at the WARD level, not the municipality
+    level every other wave uses — e.g. all 325 wards of the City of
+    Milwaukee share one municipal FIPS code. Confirmed isolated entirely
+    to Wisconsin (1,890 of WI's 3,589 rows collapse into 213 municipal
+    FIPS groups; every other state's FIPS is already unique in this
+    wave). This is NOT the existing DUPLICATE_FIPS case (a handful of
+    exactly-2-row pairs, resolved post-hoc after per-role counts are
+    built) — it needs a real groupby-sum aggregation on the raw numeric
+    columns before ID harmonization, since a group can have up to 325
+    rows. Sentinel-mask each numeric column first, then sum treating a
+    missing ward as contributing 0 (same convention already used for
+    reason_sum elsewhere), not NaN propagation.
+    """
+    fips = raw["FIPSCode"].str.strip().str.replace(r"\.0$", "", regex=True).str.zfill(10)
+    numeric_cols = [cw[role] for role in COUNT_COLS if role in cw] + cw["rejection_reasons"]
+    numeric_cols = [c for c in dict.fromkeys(numeric_cols) if c in raw.columns]
+
+    work = raw.copy()
+    work["_fips"] = fips
+    for col in numeric_cols:
+        work[col] = _clean_numeric(work[col]).fillna(0)
+
+    agg = work.groupby("_fips", as_index=False).agg({
+        "State": "first",
+        "Jurisdiction": "first",
+        **{col: "sum" for col in numeric_cols},
+    })
+    agg = agg.rename(columns={"_fips": "FIPSCode"})
+    # Restore the FIPSCode dtype/format _harmonize_ids expects (a plain
+    # string it will zfill again — already 10 chars here, so this is a
+    # no-op zfill, kept for consistency with every other wave's path).
+    return agg
 
 
 def _build_state_lookup() -> dict[str, str]:
@@ -106,10 +150,13 @@ def _build_state_lookup() -> dict[str, str]:
 
 def _harmonize_ids(raw: pd.DataFrame, year: int, state_lookup: dict[str, str]) -> pd.DataFrame:
     fips = raw["FIPSCode"].str.strip().str.replace(r"\.0$", "", regex=True).str.zfill(10)
-    if year == 2016:
+    if year in (2014, 2016):
         state_abbr = raw["State"]
         state_full = state_abbr.map(state_lookup)
-        jurisdiction_name = raw["JurisdictionName"]
+        # 2014 names this column "Jurisdiction"; 2016 names it
+        # "JurisdictionName" — the only difference between these two
+        # waves' ID schemes.
+        jurisdiction_name = raw["Jurisdiction"] if year == 2014 else raw["JurisdictionName"]
     else:
         state_abbr = raw["State_Abbr"]
         state_full = raw["State_Full"]
@@ -154,8 +201,32 @@ def clean_wave(year: int, crosswalk: dict[int, dict], state_lookup: dict[str, st
     cw = crosswalk[year]
     raw = _load_raw(year)
 
+    if year == 2014:
+        raw = _aggregate_2014_wi_wards(raw, cw)
+
     ids = _harmonize_ids(raw, year, state_lookup)
-    counts = pd.DataFrame({col: _clean_numeric(raw[cw[col]]) for col in COUNT_COLS})
+
+    if year == 2014:
+        # 2014 has no single "returned by voters" total column analogous
+        # to every other wave's C1b — its own QC4_Total question exists
+        # but is far more often left blank than QC4a/QC4b are (43% vs.
+        # ~94% coverage, verified against the raw file), so using it
+        # directly would fail the usable-share gate outright (45.7%
+        # measured vs. the required >=90%). Deriving returned_by_voters
+        # as counted + rejected (both already required for `usable`
+        # anyway) reaches 93.9% usable — verified empirically before
+        # writing this, not assumed. transmitted_total still comes
+        # straight from the crosswalk (QC1_Total), unaffected by this.
+        counted = _clean_numeric(raw[cw["counted_total"]])
+        rejected = _clean_numeric(raw[cw["rejected_total"]])
+        counts = pd.DataFrame({
+            "transmitted_total": _clean_numeric(raw[cw["transmitted_total"]]),
+            "returned_by_voters": counted + rejected,
+            "counted_total": counted,
+            "rejected_total": rejected,
+        })
+    else:
+        counts = pd.DataFrame({col: _clean_numeric(raw[cw[col]]) for col in COUNT_COLS})
 
     # Reason-breakdown sum: an all-missing row contributes 0 per reason
     # column rather than propagating NaN, matching the derivation verified

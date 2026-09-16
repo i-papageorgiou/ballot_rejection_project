@@ -1,7 +1,7 @@
 """
 01_download.py — Acquire all EAVS waves and codebooks.
 
-Downloads the five EAVS public-release data files (2016-2024) and their
+Downloads the six EAVS public-release data files (2014-2024) and their
 codebooks into data/raw/. Idempotent: existing files with the expected size
 are skipped, so re-running is a no-op.
 
@@ -12,6 +12,17 @@ rather than surfacing as a mysterious result three scripts later.
 Note on the 2024 wave: the EAC published V1 in June 2025 and revised it to
 V2 in February 2026. We use V2. Any figure produced from this repo refers to
 the V2 revision.
+
+Note on 2014 (added as the panel's backward extension — see
+PROJECT_PLAN.md's "Extend the panel backward" section): 2014 predates
+EAVS's combined-CSV format. It ships as a zip of 6 separate section
+workbooks (A-F); only Section C (which has the counted/rejected/returned
+variables under a QC4/QC5 family, verified directly against the 2014
+codebook and cross-checked against the EAC's own published national
+figures — 268,720 rejected, 18,968,173 counted, both matched exactly) is
+needed, so only that member is extracted. 2010 and 2012 predate the
+combined-report format entirely (a 3-way NVRA/UOCAVA/Election Day split)
+and are NOT added here — deferred pending a separate feasibility check.
 
 Usage:
     python src/01_download.py [--force]
@@ -44,6 +55,9 @@ class Resource:
     filename: str
     expected_bytes: int
     member: str | None = None  # file to extract, when the download is a zip
+    extract_as: str | None = None  # output filename for the extracted member;
+    # defaults to eavs_<wave>.csv if unset (every wave but 2014, whose
+    # member is an .xlsx, not a .csv)
 
     @property
     def path(self) -> Path:
@@ -52,6 +66,12 @@ class Resource:
 
 RESOURCES: list[Resource] = [
     # ---- data ----
+    Resource(
+        2014, "data",
+        f"{BASE}/sites/default/files/eac_assets/1/1/2014_EAVS_Excel_Files1.zip",
+        "eavs_2014.zip", 11_519_981,
+        member="EAVS_Section_C.xlsx", extract_as="eavs_2014.xlsx",
+    ),
     Resource(
         2016, "data",
         f"{BASE}/sites/default/files/2023-12/EAVS_2016_for_Public_Release_nolabel_V1.1_CSV.zip",
@@ -82,8 +102,13 @@ RESOURCES: list[Resource] = [
         member="2024_EAVS_for_Public_Release_nolabel_V2.csv",
     ),
     # ---- codebooks ----
-    # 2016 is the only PDF; the rest are .xlsx with a machine-readable
+    # 2014 and 2016 are PDFs; 2018+ are .xlsx with a machine-readable
     # "Variables" sheet that 02_build_crosswalk.py parses.
+    Resource(
+        2014, "codebook",
+        f"{BASE}/sites/default/files/eac_assets/1/1/2014%20EAVS%20Data%20File%20Codebook-2015-06-24-V03-Final.pdf",
+        "codebook_2014.pdf", 2_212_917,
+    ),
     Resource(
         2016, "codebook",
         f"{BASE}/sites/default/files/eac_assets/1/6/EAVS_Codebook_2016.pdf",
@@ -137,7 +162,7 @@ def extract(res: Resource) -> str:
     """Extract the CSV from a zipped resource into data/raw/."""
     if res.member is None:
         return ""
-    out = RAW / f"eavs_{res.wave}.csv"
+    out = RAW / (res.extract_as or f"eavs_{res.wave}.csv")
     if out.exists():
         return f"    extracted: {out.name} (present)"
     with zipfile.ZipFile(res.path) as z:

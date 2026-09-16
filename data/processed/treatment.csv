@@ -1,254 +1,305 @@
 state_abbr,year,treated,sensitivity_treated,mechanism,confidence,pa_partial,de_edge_case,notes
+AK,2014,0,0,none,High,False,False,
 AK,2016,0,0,none,High,False,False,
 AK,2018,0,0,none,High,False,False,
 AK,2020,0,0,none,High,False,False,
 AK,2022,0,0,none,High,False,False,
 AK,2024,0,0,none,High,False,False,
+AL,2014,0,0,none,High,False,False,
 AL,2016,0,0,none,High,False,False,
 AL,2018,0,0,none,High,False,False,
 AL,2020,0,0,none,High,False,False,
 AL,2022,0,0,none,High,False,False,
 AL,2024,0,0,none,High,False,False,
+AR,2014,0,0,none,Medium,False,False,
 AR,2016,0,0,none,Medium,False,False,
 AR,2018,0,0,none,Medium,False,False,
 AR,2020,0,0,none,Medium,False,False,
 AR,2022,0,0,none,Medium,False,False,
 AR,2024,0,0,none,Medium,False,False,
+AZ,2014,1,1,statute,High,False,False,
 AZ,2016,1,1,statute,High,False,False,
 AZ,2018,1,1,statute,High,False,False,
 AZ,2020,1,1,statute,High,False,False,
 AZ,2022,1,1,statute,High,False,False,
 AZ,2024,1,1,statute,High,False,False,
+CA,2014,0,0,statute,High,False,False,
 CA,2016,0,0,statute,High,False,False,
 CA,2018,1,1,statute,High,False,False,
 CA,2020,1,1,statute,High,False,False,
 CA,2022,1,1,statute,High,False,False,
 CA,2024,1,1,statute,High,False,False,
-CO,2016,1,1,statute,High,False,False,
-CO,2018,1,1,statute,High,False,False,
-CO,2020,1,1,statute,High,False,False,
-CO,2022,1,1,statute,High,False,False,
-CO,2024,1,1,statute,High,False,False,
+CO,2014,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."
+CO,2016,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."
+CO,2018,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."
+CO,2020,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."
+CO,2022,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."
+CO,2024,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: HB13-1303 (2013 Voter Access and Modernized Elections Act) is well before the Nov. 2014 election, making CO a real 2014-cohort switcher, not always-treated."
+CT,2014,0,0,statute,High,False,False,Law enacted 2026 (Public Act 26-42) — postdates the panel entirely.
 CT,2016,0,0,statute,High,False,False,Law enacted 2026 (Public Act 26-42) — postdates the panel entirely.
 CT,2018,0,0,statute,High,False,False,Law enacted 2026 (Public Act 26-42) — postdates the panel entirely.
 CT,2020,0,0,statute,High,False,False,Law enacted 2026 (Public Act 26-42) — postdates the panel entirely.
 CT,2022,0,0,statute,High,False,False,Law enacted 2026 (Public Act 26-42) — postdates the panel entirely.
 CT,2024,0,0,statute,High,False,False,Law enacted 2026 (Public Act 26-42) — postdates the panel entirely.
+DC,2014,0,0,statute,High,False,False,
 DC,2016,0,0,statute,High,False,False,
 DC,2018,0,0,statute,High,False,False,
 DC,2020,0,0,statute,High,False,False,
 DC,2022,0,0,statute,High,False,False,
 DC,2024,1,1,statute,High,False,False,
+DE,2014,0,0,statute,Medium,False,True,Adoption falls at/after the 2024 panel edge; coded conservatively as outside the panel.
 DE,2016,0,0,statute,Medium,False,True,Adoption falls at/after the 2024 panel edge; coded conservatively as outside the panel.
 DE,2018,0,0,statute,Medium,False,True,Adoption falls at/after the 2024 panel edge; coded conservatively as outside the panel.
 DE,2020,0,0,statute,Medium,False,True,Adoption falls at/after the 2024 panel edge; coded conservatively as outside the panel.
 DE,2022,0,0,statute,Medium,False,True,Adoption falls at/after the 2024 panel edge; coded conservatively as outside the panel.
 DE,2024,0,0,statute,Medium,False,True,Adoption falls at/after the 2024 panel edge; coded conservatively as outside the panel.
+FL,2014,1,1,statute,High,False,False,
 FL,2016,1,1,statute,High,False,False,
 FL,2018,1,1,statute,High,False,False,
 FL,2020,1,1,statute,High,False,False,
 FL,2022,1,1,statute,High,False,False,
 FL,2024,1,1,statute,High,False,False,
+GA,2014,1,1,statute,Medium,False,False,
 GA,2016,1,1,statute,Medium,False,False,
 GA,2018,1,1,statute,Medium,False,False,
 GA,2020,1,1,statute,Medium,False,False,
 GA,2022,1,1,statute,Medium,False,False,
 GA,2024,1,1,statute,Medium,False,False,
+HI,2014,0,0,statute,High,False,False,
 HI,2016,0,0,statute,High,False,False,
 HI,2018,0,0,statute,High,False,False,
 HI,2020,1,1,statute,High,False,False,
 HI,2022,1,1,statute,High,False,False,
 HI,2024,1,1,statute,High,False,False,
+IA,2014,0,0,"statute, then enjoined",Medium,False,False,Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).
 IA,2016,0,0,"statute, then enjoined",Medium,False,False,Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).
 IA,2018,1,1,"statute, then enjoined",Medium,False,False,Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).
 IA,2020,0,0,"statute, then enjoined",Medium,False,False,Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).
 IA,2022,0,0,"statute, then enjoined",Medium,False,False,Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).
 IA,2024,0,0,"statute, then enjoined",Medium,False,False,Treatment reversal: 2017 law in force for 2018 wave only; enjoined from Sept. 2019 onward (LULAC v. Pate).
+ID,2014,0,0,none,Medium,False,False,
 ID,2016,0,0,none,Medium,False,False,
 ID,2018,0,0,none,Medium,False,False,
 ID,2020,0,0,none,Medium,False,False,
 ID,2022,0,0,none,Medium,False,False,
 ID,2024,0,0,none,Medium,False,False,
+IL,2014,1,1,statute,Low,False,False,Existence confirmed; adoption year is an inference (timing unresolved after 8+ attempts).
 IL,2016,1,1,statute,Low,False,False,Existence confirmed; adoption year is an inference (timing unresolved after 8+ attempts).
 IL,2018,1,1,statute,Low,False,False,Existence confirmed; adoption year is an inference (timing unresolved after 8+ attempts).
 IL,2020,1,1,statute,Low,False,False,Existence confirmed; adoption year is an inference (timing unresolved after 8+ attempts).
 IL,2022,1,1,statute,Low,False,False,Existence confirmed; adoption year is an inference (timing unresolved after 8+ attempts).
 IL,2024,1,1,statute,Low,False,False,Existence confirmed; adoption year is an inference (timing unresolved after 8+ attempts).
+IN,2014,0,0,statute,High,False,False,
 IN,2016,0,0,statute,High,False,False,
 IN,2018,0,0,statute,High,False,False,
 IN,2020,0,0,statute,High,False,False,
 IN,2022,1,1,statute,High,False,False,
 IN,2024,1,1,statute,High,False,False,
+KS,2014,0,0,statute,High,False,False,
 KS,2016,0,0,statute,High,False,False,
 KS,2018,0,0,statute,High,False,False,
 KS,2020,1,1,statute,High,False,False,
 KS,2022,1,1,statute,High,False,False,
 KS,2024,1,1,statute,High,False,False,
+KY,2014,0,0,statute,High,False,False,
 KY,2016,0,0,statute,High,False,False,
 KY,2018,0,0,statute,High,False,False,
 KY,2020,0,0,statute,High,False,False,
 KY,2022,1,1,statute,High,False,False,
 KY,2024,1,1,statute,High,False,False,
+LA,2014,0,0,statute,High,False,False,
 LA,2016,0,0,statute,High,False,False,
 LA,2018,0,0,statute,High,False,False,
 LA,2020,0,0,statute,High,False,False,
 LA,2022,1,1,statute,High,False,False,
 LA,2024,1,1,statute,High,False,False,
+MA,2014,1,1,statute,Medium,False,False,Existence confirmed via direct statutory text; adoption year is an inference.
 MA,2016,1,1,statute,Medium,False,False,Existence confirmed via direct statutory text; adoption year is an inference.
 MA,2018,1,1,statute,Medium,False,False,Existence confirmed via direct statutory text; adoption year is an inference.
 MA,2020,1,1,statute,Medium,False,False,Existence confirmed via direct statutory text; adoption year is an inference.
 MA,2022,1,1,statute,Medium,False,False,Existence confirmed via direct statutory text; adoption year is an inference.
 MA,2024,1,1,statute,Medium,False,False,Existence confirmed via direct statutory text; adoption year is an inference.
+MD,2014,0,0,statute,High,False,False,
 MD,2016,0,0,statute,High,False,False,
 MD,2018,0,0,statute,High,False,False,
 MD,2020,0,0,statute,High,False,False,
 MD,2022,0,0,statute,High,False,False,
 MD,2024,1,1,statute,High,False,False,
+ME,2014,0,0,statute,High,False,False,
 ME,2016,0,0,statute,High,False,False,
 ME,2018,0,0,statute,High,False,False,
 ME,2020,0,0,statute,High,False,False,
 ME,2022,1,1,statute,High,False,False,
 ME,2024,1,1,statute,High,False,False,
+MI,2014,0,0,"constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule",High,False,False,
 MI,2016,0,0,"constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule",High,False,False,
 MI,2018,0,0,"constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule",High,False,False,
 MI,2020,0,0,"constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule",High,False,False,
 MI,2022,0,0,"constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule",High,False,False,
 MI,2024,1,1,"constitutional amendment (2022 Ballot Proposal 2), implemented via administrative rule",High,False,False,
+MN,2014,1,1,statute,High,False,False,
 MN,2016,1,1,statute,High,False,False,
 MN,2018,1,1,statute,High,False,False,
 MN,2020,1,1,statute,High,False,False,
 MN,2022,1,1,statute,High,False,False,
 MN,2024,1,1,statute,High,False,False,
+MO,2014,0,0,none,Medium,False,False,
 MO,2016,0,0,none,Medium,False,False,
 MO,2018,0,0,none,Medium,False,False,
 MO,2020,0,0,none,Medium,False,False,
 MO,2022,0,0,none,Medium,False,False,
 MO,2024,0,0,none,Medium,False,False,
+MS,2014,0,0,guidance (administrative rule),High,False,False,
 MS,2016,0,0,guidance (administrative rule),High,False,False,
 MS,2018,0,0,guidance (administrative rule),High,False,False,
 MS,2020,1,1,guidance (administrative rule),High,False,False,
 MS,2022,1,1,guidance (administrative rule),High,False,False,
 MS,2024,1,1,guidance (administrative rule),High,False,False,
+MT,2014,1,1,statute,Low-Medium,False,False,"Weakest-supported row: inferred from a neighboring statutory section, not directly dated."
 MT,2016,1,1,statute,Low-Medium,False,False,"Weakest-supported row: inferred from a neighboring statutory section, not directly dated."
 MT,2018,1,1,statute,Low-Medium,False,False,"Weakest-supported row: inferred from a neighboring statutory section, not directly dated."
 MT,2020,1,1,statute,Low-Medium,False,False,"Weakest-supported row: inferred from a neighboring statutory section, not directly dated."
 MT,2022,1,1,statute,Low-Medium,False,False,"Weakest-supported row: inferred from a neighboring statutory section, not directly dated."
 MT,2024,1,1,statute,Low-Medium,False,False,"Weakest-supported row: inferred from a neighboring statutory section, not directly dated."
+NC,2014,0,0,"litigation (consent decree, 2020)",Medium,False,False,Primary variable: No (statutory-only definition). Sensitivity variable treats as treated from 2020 (consent decree).
 NC,2016,0,0,"litigation (consent decree, 2020)",Medium,False,False,Primary variable: No (statutory-only definition). Sensitivity variable treats as treated from 2020 (consent decree).
 NC,2018,0,0,"litigation (consent decree, 2020)",Medium,False,False,Primary variable: No (statutory-only definition). Sensitivity variable treats as treated from 2020 (consent decree).
 NC,2020,0,1,"litigation (consent decree, 2020)",Medium,False,False,Primary variable: No (statutory-only definition). Sensitivity variable treats as treated from 2020 (consent decree).
 NC,2022,0,1,"litigation (consent decree, 2020)",Medium,False,False,Primary variable: No (statutory-only definition). Sensitivity variable treats as treated from 2020 (consent decree).
 NC,2024,0,1,"litigation (consent decree, 2020)",Medium,False,False,Primary variable: No (statutory-only definition). Sensitivity variable treats as treated from 2020 (consent decree).
+ND,2014,0,0,statute (post-litigation codification),High,False,False,
 ND,2016,0,0,statute (post-litigation codification),High,False,False,
 ND,2018,0,0,statute (post-litigation codification),High,False,False,
 ND,2020,0,0,statute (post-litigation codification),High,False,False,
 ND,2022,1,1,statute (post-litigation codification),High,False,False,
 ND,2024,1,1,statute (post-litigation codification),High,False,False,
+NE,2014,0,0,none,High,False,False,
 NE,2016,0,0,none,High,False,False,
 NE,2018,0,0,none,High,False,False,
 NE,2020,0,0,none,High,False,False,
 NE,2022,0,0,none,High,False,False,
 NE,2024,0,0,none,High,False,False,
+NH,2014,0,0,none,Medium,False,False,
 NH,2016,0,0,none,Medium,False,False,
 NH,2018,0,0,none,Medium,False,False,
 NH,2020,0,0,none,Medium,False,False,
 NH,2022,0,0,none,Medium,False,False,
 NH,2024,0,0,none,Medium,False,False,
+NJ,2014,0,0,statute (contemporaneous litigation also present),Medium,False,False,
 NJ,2016,0,0,statute (contemporaneous litigation also present),Medium,False,False,
 NJ,2018,0,0,statute (contemporaneous litigation also present),Medium,False,False,
 NJ,2020,1,1,statute (contemporaneous litigation also present),Medium,False,False,
 NJ,2022,1,1,statute (contemporaneous litigation also present),Medium,False,False,
 NJ,2024,1,1,statute (contemporaneous litigation also present),Medium,False,False,
+NM,2014,1,1,statute,Low-Medium,False,False,
 NM,2016,1,1,statute,Low-Medium,False,False,
 NM,2018,1,1,statute,Low-Medium,False,False,
 NM,2020,1,1,statute,Low-Medium,False,False,
 NM,2022,1,1,statute,Low-Medium,False,False,
 NM,2024,1,1,statute,Low-Medium,False,False,
+NV,2014,0,0,statute,High,False,False,
 NV,2016,0,0,statute,High,False,False,
 NV,2018,0,0,statute,High,False,False,
 NV,2020,1,1,statute,High,False,False,
 NV,2022,1,1,statute,High,False,False,
 NV,2024,1,1,statute,High,False,False,
+NY,2014,0,0,statute,High,False,False,
 NY,2016,0,0,statute,High,False,False,
 NY,2018,0,0,statute,High,False,False,
 NY,2020,1,1,statute,High,False,False,
 NY,2022,1,1,statute,High,False,False,
 NY,2024,1,1,statute,High,False,False,
+OH,2014,1,1,statute,Medium,False,False,"One of the two weakest-supported rows in the table (single source, unreinforced on re-check)."
 OH,2016,1,1,statute,Medium,False,False,"One of the two weakest-supported rows in the table (single source, unreinforced on re-check)."
 OH,2018,1,1,statute,Medium,False,False,"One of the two weakest-supported rows in the table (single source, unreinforced on re-check)."
 OH,2020,1,1,statute,Medium,False,False,"One of the two weakest-supported rows in the table (single source, unreinforced on re-check)."
 OH,2022,1,1,statute,Medium,False,False,"One of the two weakest-supported rows in the table (single source, unreinforced on re-check)."
 OH,2024,1,1,statute,Medium,False,False,"One of the two weakest-supported rows in the table (single source, unreinforced on re-check)."
+OK,2014,0,0,none,Medium,False,False,
 OK,2016,0,0,none,Medium,False,False,
 OK,2018,0,0,none,Medium,False,False,
 OK,2020,0,0,none,Medium,False,False,
 OK,2022,0,0,none,Medium,False,False,
 OK,2024,0,0,none,Medium,False,False,
+OR,2014,1,1,statute,Medium,False,False,
 OR,2016,1,1,statute,Medium,False,False,
 OR,2018,1,1,statute,Medium,False,False,
 OR,2020,1,1,statute,Medium,False,False,
 OR,2022,1,1,statute,Medium,False,False,
 OR,2024,1,1,statute,Medium,False,False,
+PA,2014,0,0,discretionary,Medium,True,False,No statewide law; county-optional cure. Coded untreated at state level pending a jurisdiction-level design decision.
 PA,2016,0,0,discretionary,Medium,True,False,No statewide law; county-optional cure. Coded untreated at state level pending a jurisdiction-level design decision.
 PA,2018,0,0,discretionary,Medium,True,False,No statewide law; county-optional cure. Coded untreated at state level pending a jurisdiction-level design decision.
 PA,2020,0,0,discretionary,Medium,True,False,No statewide law; county-optional cure. Coded untreated at state level pending a jurisdiction-level design decision.
 PA,2022,0,0,discretionary,Medium,True,False,No statewide law; county-optional cure. Coded untreated at state level pending a jurisdiction-level design decision.
 PA,2024,0,0,discretionary,Medium,True,False,No statewide law; county-optional cure. Coded untreated at state level pending a jurisdiction-level design decision.
+RI,2014,0,0,guidance (administrative regulation),High,False,False,
 RI,2016,0,0,guidance (administrative regulation),High,False,False,
 RI,2018,1,1,guidance (administrative regulation),High,False,False,
 RI,2020,1,1,guidance (administrative regulation),High,False,False,
 RI,2022,1,1,guidance (administrative regulation),High,False,False,
 RI,2024,1,1,guidance (administrative regulation),High,False,False,
+SC,2014,0,0,none,Medium,False,False,
 SC,2016,0,0,none,Medium,False,False,
 SC,2018,0,0,none,Medium,False,False,
 SC,2020,0,0,none,Medium,False,False,
 SC,2022,0,0,none,Medium,False,False,
 SC,2024,0,0,none,Medium,False,False,
+SD,2014,0,0,none,Medium,False,False,
 SD,2016,0,0,none,Medium,False,False,
 SD,2018,0,0,none,Medium,False,False,
 SD,2020,0,0,none,Medium,False,False,
 SD,2022,0,0,none,Medium,False,False,
 SD,2024,0,0,none,Medium,False,False,
+TN,2014,0,0,none,Medium,False,False,
 TN,2016,0,0,none,Medium,False,False,
 TN,2018,0,0,none,Medium,False,False,
 TN,2020,0,0,none,Medium,False,False,
 TN,2022,0,0,none,Medium,False,False,
 TN,2024,0,0,none,Medium,False,False,
+TX,2014,0,0,statute,Medium,False,False,
 TX,2016,0,0,statute,Medium,False,False,
 TX,2018,0,0,statute,Medium,False,False,
 TX,2020,0,0,statute,Medium,False,False,
 TX,2022,1,1,statute,Medium,False,False,
 TX,2024,1,1,statute,Medium,False,False,
+UT,2014,0,0,statute,High,False,False,
 UT,2016,0,0,statute,High,False,False,
 UT,2018,0,0,statute,High,False,False,
 UT,2020,1,1,statute,High,False,False,
 UT,2022,1,1,statute,High,False,False,
 UT,2024,1,1,statute,High,False,False,
+VA,2014,0,0,statute,High,False,False,
 VA,2016,0,0,statute,High,False,False,
 VA,2018,0,0,statute,High,False,False,
 VA,2020,1,1,statute,High,False,False,
 VA,2022,1,1,statute,High,False,False,
 VA,2024,1,1,statute,High,False,False,
+VT,2014,1,1,statute,High,False,False,
 VT,2016,1,1,statute,High,False,False,
 VT,2018,1,1,statute,High,False,False,
 VT,2020,1,1,statute,High,False,False,
 VT,2022,1,1,statute,High,False,False,
 VT,2024,1,1,statute,High,False,False,
-WA,2016,1,1,statute,High,False,False,
-WA,2018,1,1,statute,High,False,False,
-WA,2020,1,1,statute,High,False,False,
-WA,2022,1,1,statute,High,False,False,
-WA,2024,1,1,statute,High,False,False,
+WA,2014,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."
+WA,2016,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."
+WA,2018,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."
+WA,2020,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."
+WA,2022,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."
+WA,2024,1,1,statute,High,False,False,"Resolved from 'pre-2016' when the 2014 wave was added: 2011 c.10 (effective 8/24/2011, confirmed) is well before the Nov. 2014 election, making WA a real 2014-cohort switcher, not always-treated."
+WI,2014,0,0,discretionary,High,False,False,"Clerks ""may"" return a defective ballot for correction; no uniform mandate."
 WI,2016,0,0,discretionary,High,False,False,"Clerks ""may"" return a defective ballot for correction; no uniform mandate."
 WI,2018,0,0,discretionary,High,False,False,"Clerks ""may"" return a defective ballot for correction; no uniform mandate."
 WI,2020,0,0,discretionary,High,False,False,"Clerks ""may"" return a defective ballot for correction; no uniform mandate."
 WI,2022,0,0,discretionary,High,False,False,"Clerks ""may"" return a defective ballot for correction; no uniform mandate."
 WI,2024,0,0,discretionary,High,False,False,"Clerks ""may"" return a defective ballot for correction; no uniform mandate."
+WV,2014,0,0,none,Medium,False,False,
 WV,2016,0,0,none,Medium,False,False,
 WV,2018,0,0,none,Medium,False,False,
 WV,2020,0,0,none,Medium,False,False,
 WV,2022,0,0,none,Medium,False,False,
 WV,2024,0,0,none,Medium,False,False,
+WY,2014,0,0,none,Medium,False,False,
 WY,2016,0,0,none,Medium,False,False,
 WY,2018,0,0,none,Medium,False,False,
 WY,2020,0,0,none,Medium,False,False,

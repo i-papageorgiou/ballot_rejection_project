@@ -21,7 +21,10 @@ from conftest import RAW, WAVES
 
 # Verified national rejected-ballot totals (see PROJECT_PLAN.md / this
 # repo's own validation_report.md). Exact-match regression fixtures.
+# 2014: confirmed against the EAC's own 2014 Comprehensive Report figure
+# ("rejecting 268,720"), matched exactly by an independent raw-file sum.
 EXPECTED_NATIONAL_TOTAL = {
+    2014: 268_720,
     2016: 318_728,
     2018: 430_196,
     2020: 560_826,
@@ -30,6 +33,10 @@ EXPECTED_NATIONAL_TOTAL = {
 }
 
 # Verified numerator/denominator column letters per wave (variable_memo.md).
+# 2014's returned_by_voters is DERIVED (counted+rejected), not a single
+# column — see 03_clean_eavs.py's clean_wave() — so it has no single
+# "column letter" to check here the way every other wave does; this test
+# is skipped for 2014 specifically (see test_crosswalk_matches_known_mapping).
 EXPECTED_MAPPING = {
     2016: dict(returned_by_voters="C1b", rejected_total="C4b"),
     2018: dict(returned_by_voters="C1b", rejected_total="C4a"),
@@ -39,10 +46,11 @@ EXPECTED_MAPPING = {
 }
 
 # Verified rejection-reason column counts per wave.
-EXPECTED_N_REASONS = {2016: 22, 2018: 17, 2020: 17, 2022: 19, 2024: 19}
+EXPECTED_N_REASONS = {2014: 22, 2016: 22, 2018: 17, 2020: 17, 2022: 19, 2024: 19}
 
 # Verified usable-row share per wave, with slack either side.
 EXPECTED_USABLE_RANGE = {
+    2014: (0.90, 0.98),
     2016: (0.85, 0.95),
     2018: (0.92, 0.99),
     2020: (0.93, 0.99),
@@ -52,8 +60,16 @@ EXPECTED_USABLE_RANGE = {
 
 # Verified median rejection rate (%) among usable rows per wave — the 2020
 # dip is a real, documented feature, not noise, so this is checked tightly.
-EXPECTED_MEDIAN_RATE_PCT = {2016: 0.37, 2018: 0.67, 2020: 0.25, 2022: 0.47, 2024: 0.39}
+EXPECTED_MEDIAN_RATE_PCT = {2014: 0.29, 2016: 0.37, 2018: 0.67, 2020: 0.25, 2022: 0.47, 2024: 0.39}
 MEDIAN_RATE_TOLERANCE_PCT = 0.05
+
+# 2014 reports Wisconsin at the ward level (e.g. all 325 City of Milwaukee
+# wards share one municipal FIPS) — a real groupby-sum aggregation in
+# 03_clean_eavs.py's _aggregate_2014_wi_wards(), not the 2-row
+# KNOWN_DUPLICATES case below. Verified independently from the raw file
+# before writing the aggregation code (325 ward rows, QC4a sum 23,181 +
+# QC4b sum 125 = 23,306 derived returned_by_voters).
+MILWAUKEE_2014 = dict(fips="5507953000", n_ward_rows=325, counted_total=23_181, rejected_total=125, returned_by_voters=23_306)
 
 # The 3 known duplicate-FIPS jurisdictions (post-zfill(10)) and the raw
 # FIPSCode value each was assigned before cleaning.
@@ -87,6 +103,8 @@ def test_crosswalk_matches_known_mapping(crosswalk, wave):
     """The check that would catch the 2016 C4a/C4b inversion if the
     crosswalk regressed: the numerator/denominator letters must match the
     empirically verified mapping, not just be present."""
+    if wave == 2014:
+        pytest.skip("2014's returned_by_voters is derived (counted+rejected), not a crosswalk column")
     cw = crosswalk[wave]
     expected = EXPECTED_MAPPING[wave]
     assert cw["returned_by_voters"] == expected["returned_by_voters"]
@@ -146,6 +164,33 @@ def test_known_duplicates_were_resolved(interim_by_wave):
                 f"{year}: {clean_fips} returned_by_voters does not equal the sum of both raw rows "
                 "— duplicate resolution may have dropped one instead of summing"
             )
+
+
+def test_2014_wi_ward_aggregation(interim_by_wave):
+    """Independently re-derives, from the raw .xlsx (not touching
+    03_clean_eavs.py's own aggregation code), that all 325 City of
+    Milwaukee ward rows were summed into one municipal-FIPS row rather
+    than one ward silently overwriting the others or the group being
+    dropped. Same spirit as test_known_duplicates_were_resolved, but for
+    the 2014-only ward-level aggregation, which is a different code path
+    (arbitrary group size via groupby-sum, not the 2-row DUPLICATE_FIPS
+    case)."""
+    df = interim_by_wave[2014]
+    row = df[df["fips"] == MILWAUKEE_2014["fips"]]
+    assert len(row) == 1, f"expected exactly 1 aggregated row for Milwaukee, found {len(row)}"
+
+    raw = pd.read_excel(RAW / "eavs_2014.xlsx", dtype=str)
+    raw_fips = raw["FIPSCode"].str.strip().str.replace(r"\.0$", "", regex=True).str.zfill(10)
+    ward_rows = raw[raw_fips == MILWAUKEE_2014["fips"]]
+    assert len(ward_rows) == MILWAUKEE_2014["n_ward_rows"], (
+        f"expected {MILWAUKEE_2014['n_ward_rows']} raw ward rows for Milwaukee, found {len(ward_rows)}"
+    )
+
+    counted = pd.to_numeric(ward_rows["QC4a"], errors="coerce").mask(lambda s: s < 0).fillna(0).sum()
+    rejected = pd.to_numeric(ward_rows["QC4b"], errors="coerce").mask(lambda s: s < 0).fillna(0).sum()
+    assert row.iloc[0]["counted_total"] == pytest.approx(counted)
+    assert row.iloc[0]["rejected_total"] == pytest.approx(rejected)
+    assert row.iloc[0]["returned_by_voters"] == pytest.approx(counted + rejected)
 
 
 def test_usable_share_within_expected_range(interim: pd.DataFrame, wave: int):
