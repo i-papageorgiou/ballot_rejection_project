@@ -1,6 +1,6 @@
 # Administrative Burden at the Ballot Box
 
-**Status: Weeks 1–5 done.** TWFE, Sun-Abraham, and Callaway-Sant'Anna all
+**Status: Phases 1–5 done.** TWFE, Sun-Abraham, and Callaway-Sant'Anna all
 agree on a clean null effect (see `PROJECT_PLAN.md`'s Phase 4 section for
 the two diagnosed-but-unresolved caveats worth reading before citing any
 number). The project's deliverable — an interactive web dashboard, not a
