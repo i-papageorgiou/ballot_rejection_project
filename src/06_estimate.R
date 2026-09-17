@@ -530,7 +530,7 @@ writeLines(rob_lines, rob_path)
 cat(sprintf("wrote %s\n", rob_path))
 
 # ==========================================================================
-# WEEK 5 DASHBOARD DATA (docs/data/*.json) — written from the same
+# PHASE 5 DASHBOARD DATA (docs/data/*.json) — written from the same
 # in-memory objects as the markdown tables above, so the dashboard can
 # never silently drift from what this script actually computed.
 # ==========================================================================

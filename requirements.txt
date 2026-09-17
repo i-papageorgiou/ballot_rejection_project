@@ -1,5 +1,5 @@
 # Python side: acquisition, cleaning, panel construction, and the
-# county-level choropleth. Estimation (Week 4) runs in R — see
+# county-level choropleth. Estimation (Phase 4) runs in R — see
 # codebooks/eavs_variable_crosswalk.md and PROJECT_PLAN.md for the split
 # rationale (geopandas already works here; R's sf needs system GDAL/PROJ).
 #

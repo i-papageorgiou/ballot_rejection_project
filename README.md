@@ -47,7 +47,7 @@ once GitHub Pages is enabled (Settings → Pages → Deploy from branch →
 `main` /(root) — not yet done as of this commit). **Picking this project
 up? Start with `HANDOFF.md`** — it has the reading order, verified
 facts, and next steps. See `PROJECT_PLAN.md` for
-the full week-by-week plan and `Project_Handoff_Ballot_Rejection_Analysis.md`
+the full phase-by-phase plan and `Project_Handoff_Ballot_Rejection_Analysis.md`
 for the original project brief.
 
 ## Research question
