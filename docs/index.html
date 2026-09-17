@@ -5,91 +5,194 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Administrative Burden at the Ballot Box</title>
 <meta name="description" content="Do state mail-ballot signature-cure laws reduce mail ballot rejection rates? A staggered difference-in-differences analysis of EAVS data, 2014-2024.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.35.2/plotly.min.js"></script>
 </head>
 <body>
 <div class="wrap">
 
-  <header>
-    <h1>Administrative Burden at the Ballot Box</h1>
-    <p class="subtitle">Do state mail-ballot signature-cure laws reduce jurisdiction-level mail ballot rejection rates? Staggered difference-in-differences, EAVS administrative data, 2014&ndash;2024.</p>
+  <header class="site-header">
+    <span class="site-name">Administrative Burden at the Ballot Box</span>
+    <span class="site-meta">Ilias Papageorgiou &nbsp;&middot;&nbsp; EAVS 2014&ndash;2024 &nbsp;&middot;&nbsp; Independent analysis</span>
   </header>
 
-  <div class="headline-box">
-    <h2>Headline finding: no detectable effect</h2>
-    <p id="headline-text">Loading...</p>
-    <p style="font-size:0.85rem; color:var(--muted); margin-bottom:0;">
-      This is the strongest form of "no effect detected" this project can support: three different estimators, built to correct for each other's known weaknesses, independently agree. It is not a weak or inconclusive result &mdash; see the coefficient comparison below.
-    </p>
+  <div class="status-note">
+    <span class="tag">Weeks 1&ndash;5 done</span>
+    <span class="msg">Every number on this page is loaded live from <code>docs/data/*.json</code>, written by this repository's own pipeline (<code>src/06_estimate.R</code>, <code>src/07_figures.py</code>) &mdash; nothing here is hand-typed or synthetic. See the Limitations section below, and the repository's <code>PROJECT_PLAN.md</code>, before citing any number.</span>
   </div>
 
-  <section class="card">
-    <h2>Coefficient comparison</h2>
-    <p>Effect of a mandatory signature-cure notice law on jurisdiction-year mail ballot rejection rate, by estimator.</p>
-    <div id="chart-coefficients" class="chart"></div>
-    <p class="legend-note">TWFE = naive two-way fixed effects (known to be biased under staggered adoption with heterogeneous effects &mdash; the baseline this design exists to correct, not the headline estimate). Sun-Abraham and Callaway-Sant'Anna are the two staggered-adoption-corrected estimators. Error bars: 95% CI (TWFE's second bar shows the wild-cluster bootstrap CI).</p>
+  <section class="hero">
+    <p class="eyebrow">Null result &middot; Mail ballot rejection &middot; 2014&ndash;2024</p>
+    <h1>A cure that doesn't change the count</h1>
+    <p class="dek">A growing number of states now let a voter fix, or &ldquo;cure,&rdquo; a mail ballot flagged for a mismatched signature instead of having it thrown out. This project built a jurisdiction-year panel from six waves of the federal government's own election-administration survey and looked for the drop in rejection rates that should follow. Three estimators &mdash; built to fail in different directions &mdash; agree it isn't there.</p>
   </section>
 
-  <section class="card">
-    <h2>Event study</h2>
-    <p>Callaway-Sant'Anna dynamic aggregation: the treatment effect by time relative to each state's adoption wave.</p>
-    <div id="chart-eventstudy" class="chart"></div>
-    <div class="caveat-box" id="pretrend-caveat">Loading pre-trend diagnosis...</div>
+  <section class="stat-grid" id="stat-grid">
+    <div class="stat-tile"><div class="value loading">&hellip;</div><div class="label">Loading</div><div class="note">&nbsp;</div></div>
   </section>
 
-  <section class="card">
-    <h2>Rejection-rate distribution by state</h2>
-    <p>Median rejection rate (usable jurisdiction-years) by wave. Select a wave to sort states.</p>
-    <p>
-      <label>Wave: <select id="wave-select"></select></label>
-    </p>
-    <div id="chart-statedist" class="chart tall"></div>
+  <section class="split">
+    <div>
+      <h2>The question</h2>
+      <p>A mail ballot can fail for clerical reasons that have nothing to do with eligibility: it arrives late, it's missing a witness signature, or &mdash; the case that generates the most litigation &mdash; the signature on the return envelope doesn't look enough like the one on file. An election worker compares two scribbles, decides they don't match, and the ballot is set aside.</p>
+      <p>A signature-cure requirement is the direct fix: the jurisdiction has to notify the voter and give them a window, typically a few days after the election, to confirm their identity so the ballot still counts. It's cheap, largely uncontroversial in principle, and has spread on a staggered timeline across states. If rejection is mostly a paperwork problem, curing should shrink it.</p>
+      <p>So does it? This analysis matches each state's jurisdiction-year rejection rate against the year its cure requirement first governed an election, and estimates the effect three different ways &mdash; a naive two-way fixed-effects regression and two estimators built specifically to correct for that regression's known bias under staggered treatment timing.</p>
+    </div>
+    <aside class="sidenote">
+      <h3>What a null result is</h3>
+      <p>Not &ldquo;nothing was found.&rdquo; A null result here means: whatever the true effect is, all three estimators' 95% intervals are consistent with zero, and none reaches conventional significance.</p>
+      <p>The coefficient-comparison figure below shows exactly how wide each of those intervals is &mdash; that width is the honest bound on what this analysis can rule out.</p>
+    </aside>
   </section>
 
-  <section class="card">
+  <section class="figure">
+    <p class="fig-label">Figure 1</p>
+    <h2>Three designs, one interval</h2>
+    <p class="dek">Point estimates and 95% confidence intervals, side by side. The three estimators disagree about almost everything internally &mdash; how comparison states are chosen, how much weight already-treated states get, which observations even count &mdash; and land in the same place.</p>
+    <div class="chart-frame">
+      <svg id="chart-coefficients" class="chart-svg" viewBox="0 0 800 230"></svg>
+      <div style="border-top: 2px solid var(--divider);">
+        <table class="data-table" id="table-coefficients">
+          <thead><tr><th>Method</th><th>Estimate, pp</th><th>Std. error</th><th>95% interval, pp</th><th>p</th><th>Jurisdiction-years</th><th>States</th></tr></thead>
+          <tbody><tr><td colspan="7" class="loading">Loading&hellip;</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <p class="caption" id="coefficients-caption">Loading&hellip;</p>
+  </section>
+
+  <section class="figure">
+    <h2 style="font-size:22px; text-transform:uppercase; letter-spacing:0.02em;">Three ways of asking</h2>
+    <p class="dek">One estimate agreeing with itself isn't evidence. Three designs that fail in different directions, so a real effect would have to hide from all of them at once.</p>
+    <div class="methods">
+      <div class="method-card">
+        <div class="num">Method 01</div>
+        <h3>Two-way fixed effects</h3>
+        <p>One regression with jurisdiction and year fixed effects, so each jurisdiction is compared against its own history and each year against that year's national average.</p>
+        <p><strong>Why it can fail:</strong> under staggered adoption it can implicitly use already-treated states as part of the comparison group, biasing the average toward zero on its own &mdash; the exact problem this design exists to correct for.</p>
+      </div>
+      <div class="method-card">
+        <div class="num">Method 02</div>
+        <h3>Sun &amp; Abraham (2021)</h3>
+        <p>Estimates a separate cohort-by-event-time effect for every adoption group, then averages them, avoiding the already-treated-as-control problem. Excludes Iowa (a treatment reversal) and always-treated states (no pre-period).</p>
+        <p><strong>Why it can fail:</strong> it needs enough not-yet-treated states left in every period to serve as a clean comparison group; the estimates thin out at the edges of the panel.</p>
+      </div>
+      <div class="method-card">
+        <div class="num">Method 03</div>
+        <h3>Callaway&ndash;Sant'Anna (2021)</h3>
+        <p>Compares each adoption cohort only against states not yet treated at that time, then aggregates the resulting group-time effects into one overall estimate.</p>
+        <p><strong>Why it can fail:</strong> it buys that clean comparison by discarding some comparisons outright, so its intervals are wider by construction.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="figure">
+    <p class="fig-label">Figure 2 &middot; Interactive</p>
+    <h2>Nothing before, nothing after</h2>
+    <p class="dek">Callaway&ndash;Sant'Anna event-time coefficients relative to adoption, with 95% simultaneous confidence bands (corrected for testing every event-time at once). Flat pre-trends are the design's entry fee &mdash; they're what license reading the post-period at all. Hover a point for exact values.</p>
+    <div class="chart-frame">
+      <div class="chart-toolbar">
+        <span class="legend">Effect on rejection rate, pp &nbsp;&middot;&nbsp; 95% simultaneous CI</span>
+        <div class="readout" id="es-readout">Hover for exact values</div>
+      </div>
+      <svg id="chart-eventstudy" class="chart-svg" viewBox="0 0 800 320"></svg>
+    </div>
+    <div class="caveat-box" id="pretrend-caveat">Loading pre-trend diagnosis&hellip;</div>
+  </section>
+
+  <section class="figure">
+    <p class="fig-label">Figure 3 &middot; Interactive</p>
+    <h2>Rejection rates, state by state</h2>
+    <p class="dek">Median jurisdiction-year rejection rate by state, with the interquartile range where a state has more than one reporting jurisdiction. Pick a wave; hover a bar for the exact figure.</p>
+    <div class="chart-frame">
+      <div class="chart-toolbar">
+        <div class="wave-picker" id="wave-picker"></div>
+        <div class="readout" id="statedist-readout">Hover a bar for exact values</div>
+      </div>
+      <svg id="chart-statedist" class="chart-svg" viewBox="0 0 800 420"></svg>
+    </div>
+  </section>
+
+  <section class="figure">
+    <p class="fig-label">Figure 4</p>
     <h2>County choropleth</h2>
-    <p>Rejection rate by county, 2024 wave.</p>
-    <div id="chart-choropleth" class="chart tall"></div>
-    <p class="legend-note" id="choropleth-note">Loading...</p>
+    <p class="dek">Rejection rate by county, most recent wave.</p>
+    <div class="chart-frame">
+      <div id="chart-choropleth" style="height: 480px;"></div>
+    </div>
+    <p class="caption" id="choropleth-note">Loading&hellip;</p>
   </section>
 
-  <section class="card">
-    <h2>Heterogeneity by jurisdiction size</h2>
-    <p>Substitutes for the deferred ACS-based urban/rural split (no Census API key obtained). TWFE uses a continuous interaction; Sun-Abraham and Callaway-Sant'Anna are refit on large and small jurisdiction-size terciles separately (neither estimator takes an arbitrary covariate interaction the way an OLS formula does).</p>
-    <table class="data-table" id="table-heterogeneity">
-      <thead><tr><th>Model</th><th>Subsample</th><th>Estimate</th><th>SE</th><th>p</th><th>N (obs)</th><th>N (states)</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <div class="caveat-box" id="heterogeneity-caveat">Loading diagnosis...</div>
+  <section class="split">
+    <div>
+      <h2>Heterogeneity by jurisdiction size</h2>
+      <p>The obvious follow-up question is whether curing matters more where election offices have fewer staff and less capacity to run one. The intended test used a Census urban/rural classification; here it substitutes NCHS's Urban-Rural Classification Scheme for Counties (codes 1&ndash;2 = urban, 5&ndash;6 = rural), joined via <code>data/processed/acs_controls.csv</code>. A jurisdiction-size tercile split (TWFE only) is shown too, for reference.</p>
+      <table class="data-table" id="table-heterogeneity">
+        <thead><tr><th>Model</th><th>Subsample</th><th>Estimate, pp</th><th>SE</th><th>p</th><th>Obs</th><th>States</th></tr></thead>
+        <tbody><tr><td colspan="7" class="loading">Loading&hellip;</td></tr></tbody>
+      </table>
+    </div>
+    <aside class="sidenote">
+      <h3>Not resolved this round</h3>
+      <div id="heterogeneity-note" class="loading">Loading&hellip;</div>
+    </aside>
   </section>
 
-  <section class="card">
-    <h2>Robustness checklist</h2>
-    <p>5 variants &times; 3 estimators, plus a TWFE-only fractional-response specification.</p>
-    <table class="data-table" id="table-robustness">
-      <thead><tr><th>Model</th><th>Variant</th><th>Estimate</th><th>SE</th><th>p</th><th>N (obs)</th><th>N (states)</th></tr></thead>
-      <tbody></tbody>
-    </table>
-    <p class="legend-note" id="robustness-note"></p>
+  <section class="split">
+    <div>
+      <h2>Robustness checklist</h2>
+      <p>Five variants &times; three estimators where each applies naturally, plus a TWFE-only fractional-response specification. None of the sign/magnitude changes reported below overturn the headline null result.</p>
+      <table class="data-table" id="table-robustness">
+        <thead><tr><th>Model</th><th>Variant</th><th>Estimate, pp</th><th>SE</th><th>p</th><th>Obs</th><th>States</th></tr></thead>
+        <tbody><tr><td colspan="7" class="loading">Loading&hellip;</td></tr></tbody>
+      </table>
+    </div>
+    <aside class="sidenote">
+      <h3>One unstable cell</h3>
+      <p>Weighting Sun-Abraham's interacted specification by raw ballot counts produces a near-singular design for at least one cohort&times;time cell (weight variance runs from a median of ~210 ballots to a statewide-aggregate row of ~3.4 million). The point estimate may still be informative; its standard error and p-value are not &mdash; don't read significance into that row (marked ** in the table) either way.</p>
+    </aside>
   </section>
 
-  <section class="card">
+  <section class="section-plain">
     <h2>Limitations</h2>
     <ul>
-      <li><strong>Pre-trend, narrow but real.</strong> Event-time -6 in the Callaway-Sant'Anna event study traces to a single group-time cell (Maryland/Michigan's 2024 cohort vs. controls in 2018) &mdash; a genuine, unexplained pre-existing difference, not a broad parallel-trends violation across the panel. See the event study section above.</li>
-      <li><strong>Heterogeneity by jurisdiction size is unidentifiable with the current cohort coverage.</strong> The two corrected estimators disagree because the small-jurisdiction subsample is missing two of four treatment cohorts entirely, and the large-jurisdiction subsample's own cohort-level effects flip sign across periods &mdash; not because either estimator is wrong.</li>
-      <li><strong>Illinois and Massachusetts</strong> have confirmed cure rights but a genuinely unknown adoption year after 8+ and 5+ independent research attempts &mdash; coded as pre-2016 by inference, treated as censored/unknown in the design, not a confirmed date.</li>
+      <li><strong>Illinois and Massachusetts</strong> have confirmed signature-cure rights but a genuinely unknown adoption year after 8+ and 5+ independent research attempts &mdash; coded as pre-2016 by inference, treated as censored/unknown in the design, not a confirmed date.</li>
       <li><strong>Ohio and Montana</strong> are the two weakest-sourced rows in the 51-state treatment coding &mdash; not known to be wrong, just less independently corroborated than every other row.</li>
       <li><strong>Pennsylvania</strong> (no statewide law; county-optional cure) is coded untreated at the state level, a documented approximation, not a discovered fact. <strong>North Carolina's</strong> cure process came from litigation, not statute, and is excluded from the primary treatment variable by definition.</li>
       <li><strong>ACS demographic controls were deliberately deferred</strong> (no Census API key obtained); jurisdiction fixed effects absorb time-invariant covariates regardless.</li>
-      <li><strong>The underlying treatment coding will go stale.</strong> 400+ election-related bills were enacted in the first seven months of 2026 alone &mdash; this analysis reflects the 2016-2024 panel and coding as validated through several rounds of review, not a live-updating policy tracker.</li>
-      <li><strong>County choropleth coverage:</strong> 7 states (WI and the New England states) report EAVS data at the town/municipality level, not county &mdash; shown gray on the map above, not mapped incorrectly or silently omitted.</li>
+      <li><strong>The underlying treatment coding will go stale.</strong> Hundreds of election-related bills are enacted every year &mdash; this analysis reflects the 2014&ndash;2024 panel and coding as validated through several rounds of review, not a live-updating policy tracker.</li>
+      <li><strong>County choropleth coverage:</strong> 7 states (Wisconsin and the New England states) report EAVS data at the town/municipality level, not county &mdash; shown gray on the map above, not mapped incorrectly or silently omitted.</li>
     </ul>
   </section>
 
-  <footer>
-    <p>Full methodology, validation history, and data pipeline: see <a href="https://github.com/i-papageorgiou/ballot_rejection_project">the project repository</a>'s <a href="https://github.com/i-papageorgiou/ballot_rejection_project/blob/main/PROJECT_PLAN.md">PROJECT_PLAN.md</a> (living plan and findings) and <a href="https://github.com/i-papageorgiou/ballot_rejection_project/blob/main/HANDOFF.md">HANDOFF.md</a> (orientation for a new reader). No causal claim is made beyond what this design supports.</p>
+  <section class="section-plain">
+    <h2>Data &amp; sources</h2>
+    <div class="sources-grid">
+      <div>
+        <div class="title">EAC Election Administration and Voting Survey</div>
+        <div class="detail">State- and jurisdiction-reported mail-ballot transmission, return and rejection counts, 2014&ndash;2024 (6 waves). Source of the panel's outcome variable.</div>
+      </div>
+      <div>
+        <div class="title">State statute text and effective dates</div>
+        <div class="detail">Session laws and administrative rules, coded and independently cross-checked (see <code>codebooks/policy_coding_sheet.md</code> and <code>policy_coding_validation.md</code>), dated to the first election each requirement governed rather than to enactment.</div>
+      </div>
+      <div>
+        <div class="title">NCHS Urban-Rural Classification</div>
+        <div class="detail">County-level urban/rural codes used for the heterogeneity split above, joined via <code>data/processed/acs_controls.csv</code>.</div>
+      </div>
+      <div>
+        <div class="title">This project's repository</div>
+        <div class="detail">Full pipeline, validation history and living plan: see the links below.</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="site-footer">
+    <span class="caps">Ballot rejection study &middot; Ilias Papageorgiou</span>
+    <span>Full methodology &amp; pipeline: <a href="https://github.com/i-papageorgiou/ballot_rejection_project">the project repository</a></span>
   </footer>
 
 </div>

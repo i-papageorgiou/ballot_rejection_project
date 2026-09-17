@@ -1,5 +1,40 @@
 # Administrative Burden at the Ballot Box
 
+## What this project is about
+
+When you vote by mail, your ballot can get rejected — not counted — for
+reasons that have nothing to do with who you voted for. A signature on the
+envelope that doesn't quite match the one on file. A missing witness
+signature. A ballot that arrived a day late. States differ a lot in how
+they handle this: some let voters fix ("cure") a signature problem before
+their ballot is thrown out, some require a witness or notary to sign the
+envelope, some make it easy to request an absentee ballot and some don't.
+
+This project asks a simple question: **do these state-level rules actually
+change how many mail ballots get rejected** — and does the answer depend
+on whether you're in a big city or a small rural county, where election
+offices have very different staff and resources?
+
+To find out, we used a U.S. government survey that every state and county
+election office fills out (the EAVS survey, 2016–2024) and compared places
+that changed their mail-voting rules over that period to places that
+didn't, looking at what happened to rejection rates before and after each
+change.
+
+**What we've found so far:** across several different statistical methods,
+there's no clear, reliable effect of these policies on rejection rates —
+a "null result." That's a genuinely useful finding — it suggests some
+popular policy levers, on both sides of the debate, may not move the
+needle the way people assume — but there are a couple of open data
+questions that could still change the picture (see the status note just
+below before citing any number from this project).
+
+**Explore the results yourself, no coding required:**
+[live interactive dashboard](https://i-papageorgiou.github.io/ballot_rejection_project/)
+— browse rejection rates by state and county and see how they've moved
+over time. (Everything from here down in this README is for people
+running or extending the underlying analysis code.)
+
 **Status: Weeks 1–5 done.** TWFE, Sun-Abraham, and Callaway-Sant'Anna all
 agree on a clean null effect (see `PROJECT_PLAN.md`'s Phase 4 section for
 the two diagnosed-but-unresolved caveats worth reading before citing any
