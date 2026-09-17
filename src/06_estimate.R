@@ -43,13 +43,24 @@ panel_path <- file.path(root, "data", "processed", "panel.csv")
 treatment_path <- file.path(root, "data", "processed", "treatment.csv")
 out_dir <- file.path(root, "output", "tables")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
-# Week 5 dashboard data (docs/index.html reads these directly) — written
+# Phase 5 dashboard data (docs/index.html reads these directly) — written
 # alongside the markdown tables below, from the same in-memory model
 # objects, so the two can never silently drift apart.
 docs_data_dir <- file.path(root, "docs", "data")
 dir.create(docs_data_dir, showWarnings = FALSE, recursive = TRUE)
 
-panel <- fread(panel_path)
+
+# colClasses forces fips to stay a character column — fread's own type
+# detection otherwise reads it as numeric and silently drops the leading
+# zero on any FIPS code starting with 0 (AL, AK, AZ, AR, CA, CO, CT: state
+# codes 01-09). That only broke a value comparison in one specific place
+# below (the county_fips substr(fips, 1, 5) join added for the NCHS
+# split), but it's cheap correctness insurance to fix at the source
+# instead of patching around it downstream. Found by the NCHS
+# cohort-coverage check unexpectedly showing 0 urban states for the 2018
+# cohort — investigated rather than accepted, since CA (a 2018 adopter)
+# very much has NCHS-classified urban counties.
+panel <- fread(panel_path, colClasses = list(character = "fips"))
 treatment <- fread(treatment_path)
 
 # --- Sample restriction -----------------------------------------------
@@ -95,6 +106,61 @@ cat(sprintf(
   "Size terciles (returned_by_voters, max per fips): small <= %d, large > %d\n",
   round(tercile_cuts[1]), round(tercile_cuts[2])
 ))
+
+# --- NCHS urban/rural classification (Phase 8: real classification, ------
+# replacing nothing — added alongside the size-tercile proxy above, not
+# instead of it; see PROJECT_PLAN.md Phase 4 for why the size proxy was
+# diagnosed as unidentifiable and the plan file for this round's scope).
+# acs_controls.csv is per (county_fips, year), but nchs_rurality_2013 is
+# time-invariant by construction (a single 2013 vintage classification),
+# so one row per county_fips is enough — dedup rather than join on year,
+# which would needlessly multiply rows and risk an NA year mismatch.
+acs_controls_path <- file.path(root, "data", "processed", "acs_controls.csv")
+acs_controls <- fread(acs_controls_path, colClasses = list(character = "county_fips"))
+nchs_by_county <- unique(acs_controls[!is.na(nchs_rurality_2013), .(county_fips, nchs_rurality_2013)], by = "county_fips")
+
+panel[, county_fips := substr(as.character(fips), 1, 5)]
+panel <- merge(panel, nchs_by_county, by = "county_fips", all.x = TRUE)
+# Collapse NCHS's 1-6 scale to a clean two-group split, dropping the
+# middle (3-4) the same way the size split already drops its "mid"
+# tercile. Jurisdictions with no NCHS match (7 town-reporting states,
+# plus the small residual ACS gap documented in PROJECT_PLAN.md Phase 7)
+# are excluded from this analysis, not zero-filled or imputed.
+panel[, nchs_group := fifelse(nchs_rurality_2013 %in% c(1, 2), "urban",
+                        fifelse(nchs_rurality_2013 %in% c(5, 6), "rural", NA_character_))]
+cat(sprintf(
+  "NCHS urban/rural split: %s urban jurisdiction-years, %s rural, %s excluded (mid-category or unmatched)\n",
+  format(sum(panel$nchs_group == "urban", na.rm = TRUE), big.mark = ","),
+  format(sum(panel$nchs_group == "rural", na.rm = TRUE), big.mark = ","),
+  format(sum(is.na(panel$nchs_group)), big.mark = ",")
+))
+# Cohort coverage per group — the same transparency that diagnosed the
+# old split's flaw, so a reader can check this split doesn't share it.
+nchs_coverage <- merge(panel[!is.na(nchs_group), .(fips, state_abbr, nchs_group)],
+                        cohort_by_state, by = "state_abbr", all.x = TRUE)
+nchs_coverage[, cohort_label := fifelse(is.na(first_year), "never-treated", as.character(first_year))]
+nchs_cohort_table <- unique(nchs_coverage[, .(nchs_group, cohort_label, state_abbr)])[
+  , .(n_states = uniqueN(state_abbr)), by = .(nchs_group, cohort_label)][order(nchs_group, cohort_label)]
+cat("NCHS split cohort coverage (states per group x cohort):\n")
+print(nchs_cohort_table)
+
+# Written from nchs_cohort_table itself (not asserted) — the actual
+# treatment cohorts (excluding never-treated) present in each group,
+# checked against the full set of 4 real cohorts (2018/2020/2022/2024).
+real_cohorts <- c("2018", "2020", "2022", "2024")
+cohorts_present <- function(grp) sort(unique(nchs_cohort_table[nchs_group == grp & cohort_label != "never-treated", cohort_label]))
+urban_cohorts <- cohorts_present("urban")
+rural_cohorts <- cohorts_present("rural")
+nchs_coverage_note <- sprintf(
+  "Cohort coverage (from nchs_cohort_table, computed fresh each run, not asserted): urban has cohorts {%s} (missing: {%s}); rural has cohorts {%s} (missing: {%s}). %s",
+  paste(urban_cohorts, collapse = ", "), paste(setdiff(real_cohorts, urban_cohorts), collapse = ", "),
+  paste(rural_cohorts, collapse = ", "), paste(setdiff(real_cohorts, rural_cohorts), collapse = ", "),
+  if (length(setdiff(real_cohorts, urban_cohorts)) == 0 && length(setdiff(real_cohorts, rural_cohorts)) == 0) {
+    "All 4 treatment cohorts appear in both groups, resolving the specific structural flaw the size-tercile split had."
+  } else {
+    "Coverage is improved over the size-tercile split but NOT complete for every cohort in every group — read results accordingly, this is not the clean 4-for-4 the pre-check aimed for."
+  }
+)
 
 # --- Helper: build the sunab()-ready subset of a given data.table -------
 # Excludes Iowa (reversal) and always-treated states (no pre-period),
@@ -263,10 +329,48 @@ for (grp in c("large", "small")) {
   het_rows[[length(het_rows) + 1]] <- r_sunab
   het_rows[[length(het_rows) + 1]] <- r_cs
 }
+
+# --- NCHS urban/rural split (Phase 8) -------------------------------------
+# Same refit pattern as the size-tercile loop above, reusing
+# make_sunab_data()/make_cs_data() unchanged — this is a subsample split
+# like any other, no new fitting logic needed. Rows are labeled
+# "nchs_urban"/"nchs_rural" (not "subsample: urban/rural") specifically so
+# they're unambiguous from the size-based "subsample: large/small" rows
+# in the combined table and downstream JSON.
+for (grp in c("urban", "rural")) {
+  sub <- panel[nchs_group == grp]
+  r_sunab <- fit_sunab(sub)$row; r_sunab$variant <- paste0("nchs_", grp)
+  r_cs <- fit_cs(sub, biters = 200)$row; r_cs$variant <- paste0("nchs_", grp)
+  het_rows[[length(het_rows) + 1]] <- r_sunab
+  het_rows[[length(het_rows) + 1]] <- r_cs
+}
 heterogeneity_table <- rbindlist(het_rows)
 
+# Agreement check for the NCHS split, written the same "diagnose before
+# concluding" way as the size split's hard-coded caveat above — computed
+# from the actual fitted rows rather than assumed, since whether the two
+# estimators agree here is the empirical question this round answers.
+nchs_rows <- heterogeneity_table[variant %in% c("nchs_urban", "nchs_rural")]
+nchs_sig <- nchs_rows[, .(model, variant, estimate, p, sig = p < 0.05)]
+sunab_sig <- nchs_sig[model == "Sun-Abraham"]
+cs_sig <- nchs_sig[model == "Callaway-Sant'Anna"]
+same_sign <- function(v) {
+  su <- sunab_sig[variant == v, estimate]; cs <- cs_sig[variant == v, estimate]
+  if (length(su) == 0 || length(cs) == 0) return(NA)
+  sign(su) == sign(cs)
+}
+agreement_bits <- sapply(c("nchs_urban", "nchs_rural"), function(v) {
+  su_sig <- sunab_sig[variant == v, sig]; cs_sig_v <- cs_sig[variant == v, sig]
+  sprintf("%s: Sun-Abraham %s (p=%.4f), Callaway-Sant'Anna %s (p=%.4f), same sign: %s",
+          sub("nchs_", "", v),
+          ifelse(su_sig, "significant", "null"), sunab_sig[variant == v, p],
+          ifelse(cs_sig_v, "significant", "null"), cs_sig[variant == v, p],
+          same_sign(v))
+})
+nchs_agreement_note <- c("", paste("Result this round:", agreement_bits))
+
 # ==========================================================================
-# ROBUSTNESS CHECKLIST (PROJECT_PLAN.md Week 4): 5 variants x 3 estimators,
+# ROBUSTNESS CHECKLIST (PROJECT_PLAN.md Phase 4): 5 variants x 3 estimators,
 # plus fractional-response GLM (TWFE-only — one of the 5 variants, not a
 # 4th estimator run through everything else).
 # ==========================================================================
@@ -328,7 +432,7 @@ modelsummary(
   title = "Effect of mandatory signature-cure notice laws on mail ballot rejection rate",
   notes = c(
     "Outcome: jurisdiction-year rejection_rate (rejected_total / returned_by_voters).",
-    "Sample: usable, in-scope (50 states + DC) jurisdiction-years, 2016-2024 EAVS waves.",
+    "Sample: usable, in-scope (50 states + DC) jurisdiction-years, 2014-2024 EAVS waves.",
     "TWFE clusters SEs by state; Sun-Abraham excludes Iowa (treatment reversal) and always-treated states (no pre-period) and averages sunab's cohort x time interactions.",
     sprintf("TWFE wild-cluster bootstrap (fwildclusterboot, B=999, clustered by state): p = %.4f, 95%% CI [%.4f, %.4f].", boot$p_val, boot$conf_int[1], boot$conf_int[2]),
     sprintf("Callaway-Sant'Anna (did::att_gt, same exclusions as Sun-Abraham): overall ATT = %.4f, SE = %.4f, p = %.4f, n = %d states.", cs_fit$row$estimate, cs_fit$row$se, cs_fit$row$p, cs_fit$row$n_states),
@@ -361,6 +465,18 @@ het_lines <- c(
   "as \"heterogeneity is not conclusively established, the two corrected",
   "estimators do not corroborate each other,\" not as a confirmed effect.",
   "",
+  "## NCHS urban/rural split (Phase 8)",
+  "",
+  "The size-tercile split above was diagnosed as unidentifiable because the",
+  "small-jurisdiction subsample was missing two of four treatment cohorts",
+  "entirely. This split uses NCHS's real Urban-Rural Classification Scheme",
+  "for Counties (CODE2013, from data/processed/acs_controls.csv) instead:",
+  "urban = codes 1-2, rural = codes 5-6, mid-category (3-4) and jurisdictions",
+  "with no NCHS match (7 town-reporting states + residual ACS gap) excluded.",
+  "",
+  nchs_coverage_note,
+  nchs_agreement_note,
+  "",
   "| model | variant | estimate | se | p | n_obs | n_states |",
   "|---|---|---|---|---|---|---|"
 )
@@ -376,7 +492,7 @@ cat(sprintf("wrote %s\n", het_path))
 # --- robustness_checklist.md -----------------------------------------------
 rob_path <- file.path(out_dir, "robustness_checklist.md")
 rob_lines <- c(
-  "# Robustness checklist (PROJECT_PLAN.md Week 4)",
+  "# Robustness checklist (PROJECT_PLAN.md Phase 4)",
   "",
   "5 variants x 3 estimators (TWFE, Sun-Abraham, Callaway-Sant'Anna) where",
   "each estimator applies naturally, plus a TWFE-only fractional-response",
@@ -424,7 +540,7 @@ sunab_ci <- sunab_fit$row$estimate + c(-1.96, 1.96) * sunab_fit$row$se
 cs_ci <- cs_fit$row$estimate + c(-1.96, 1.96) * cs_fit$row$se
 
 model_comparison <- list(
-  outcome = "rejection_rate (rejected_total / returned_by_voters), usable & in-scope (50 states + DC) jurisdiction-years, 2016-2024",
+  outcome = "rejection_rate (rejected_total / returned_by_voters), usable & in-scope (50 states + DC) jurisdiction-years, 2014-2024",
   models = list(
     list(model = "TWFE", label = "Naive two-way fixed effects",
          estimate = twfe_fit$row$estimate, se = twfe_fit$row$se, p = twfe_fit$row$p,
@@ -475,7 +591,11 @@ write_json(event_study, file.path(docs_data_dir, "event_study.json"), auto_unbox
 
 write_json(list(
   twfe_interaction = het_twfe_row,
-  subsamples = heterogeneity_table[model != "TWFE"]
+  subsamples = heterogeneity_table[model != "TWFE" & !(variant %in% c("nchs_urban", "nchs_rural"))],
+  nchs_subsamples = heterogeneity_table[variant %in% c("nchs_urban", "nchs_rural")],
+  nchs_cohort_coverage = nchs_cohort_table,
+  nchs_coverage_note = nchs_coverage_note,
+  nchs_agreement_note = paste(agreement_bits, collapse = " | ")
 ), file.path(docs_data_dir, "heterogeneity.json"), auto_unbox = TRUE, digits = 6)
 
 write_json(list(
@@ -513,4 +633,4 @@ print(robustness_table)
 #     (bstrap=TRUE, the default used throughout this script). Documented
 #     asymmetry, not an oversight — resolving it would mean hand-rolling
 #     a bootstrap over sunab()'s aggregate() call.
-#   - Week 5 dashboard, once this round's results are reviewed.
+#   - Phase 5 dashboard, once this round's results are reviewed.

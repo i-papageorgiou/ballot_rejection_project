@@ -284,7 +284,7 @@ under adversarial pressure. But **North Dakota is a live, acknowledged gap
 in the treatment variable, and Illinois/Massachusetts/Arizona/Montana/
 Oregon/Ohio are 6 more rows this validation never independently touched at
 all.** Recommendation: resolve North Dakota's actual statutory status
-before Week 4 uses it (this is a bounded, specific piece of remaining
+before Phase 4 uses it (this is a bounded, specific piece of remaining
 work — reading one state's annotated code history, not another full
 pass), and carry the 6 untouched rows forward explicitly as
 lower-confidence inputs rather than treating "validated" as a property of
@@ -434,7 +434,7 @@ for "checked" among all 51 rows).
 | **Design decision, not a fact to verify** | PA (county-optional), NC (litigation-excluded by definition) | 2 |
 | **Thin — one inconclusive re-check attempt** | No new evidence found; original single-source coding stands unreinforced | OH, MT |
 
-**Verdict, final**: the treatment variable is fit to feed Week 4 for the
+**Verdict, final**: the treatment variable is fit to feed Phase 4 for the
 **47 rows with a Verified or Verified-adversarial label** (including North
 Dakota and Mississippi's corrections, and Iowa's reversal, all confirmed
 solid). **IL and MA should be used with their timing treated as censored/

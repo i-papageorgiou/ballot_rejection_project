@@ -61,7 +61,7 @@
 | Outcome: jurisdiction-year rejection_rate (rejected_total /              |
 | returned_by_voters).                                                     |
 +================+==============+==========================================+
-| Sample: usable, in-scope (50 states + DC) jurisdiction-years, 2016-2024  |
+| Sample: usable, in-scope (50 states + DC) jurisdiction-years, 2014-2024  |
 | EAVS waves.                                                              |
 +================+==============+==========================================+
 | TWFE clusters SEs by state; Sun-Abraham excludes Iowa (treatment         |
@@ -69,10 +69,10 @@
 | sunab's cohort x time interactions.                                      |
 +================+==============+==========================================+
 | TWFE wild-cluster bootstrap (fwildclusterboot, B=999, clustered by       |
-| state): p = 0.2172, 95% CI [-0.0101, 0.0022].                            |
+| state): p = 0.2102, 95% CI [-0.0102, 0.0022].                            |
 +================+==============+==========================================+
 | Callaway-Sant'Anna (did::att_gt, same exclusions as Sun-Abraham):        |
-| overall ATT = -0.0045, SE = 0.0039, p = 0.2487, n = 37 states.           |
+| overall ATT = -0.0045, SE = 0.0037, p = 0.2299, n = 37 states.           |
 +================+==============+==========================================+
 | No pre-treatment event-time shows a simultaneous confidence band         |
 | excluding 0 — no pre-trend violation detected.                           |

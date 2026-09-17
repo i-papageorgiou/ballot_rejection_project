@@ -17,7 +17,7 @@ Delaware's imprecise date, Pennsylvania's design decision).
 
 ## Treatment definition
 
-Per the project's design (`PROJECT_PLAN.md` §Week 3, `Project_Handoff_...md`
+Per the project's design (`PROJECT_PLAN.md` §Phase 3, `Project_Handoff_...md`
 §"Preferred specification"), the treatment is a **statutory requirement that
 election officials notify a voter of a signature defect on their mail
 ballot and give them an opportunity to cure it before the ballot is
@@ -213,7 +213,7 @@ What the pilot found, still true at scale:
    the design depends on.
 2. **Adoption timing requires a second research pass per state** beyond the
    snapshot tables — legislative history (bill number, session, effective
-   date) or litigation timeline. This is the actual Week 3 bottleneck the
+   date) or litigation timeline. This is the actual Phase 3 bottleneck the
    project plan anticipated ("the real bottleneck") — confirmed by this
    pilot, not just assumed.
 

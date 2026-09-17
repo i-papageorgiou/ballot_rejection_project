@@ -42,7 +42,7 @@ tabulation could plausibly be excluded from a strict "for counting" reading
 in 2016–2018. We did not find affirmative evidence in the 2018 codebook
 that the two are computed differently (the item description text is
 otherwise identical to 2020's), so we treat them as the same denominator
-by default. **This is flagged as a robustness check in Week 4, not resolved
+by default. **This is flagged as a robustness check in Phase 4, not resolved
 here.** If the pooled model's residuals show a 2016–2018 vs. 2020+ level
 break, this is the first place to look.
 

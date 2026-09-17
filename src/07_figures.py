@@ -1,12 +1,12 @@
 """
-07_figures.py — Derive the panel-based JSON data the Week 5 dashboard
+07_figures.py — Derive the panel-based JSON data the Phase 5 dashboard
 (docs/index.html) reads directly. No model fitting happens here — that's
 06_estimate.R's job (see docs/data/model_comparison.json etc., authored
 alongside that script). This script only summarizes the panel itself:
 the rejection-rate distribution by state, and the county-level values
 for the choropleth.
 
-Choropleth scope decision (see PROJECT_PLAN.md's Week 5 section for the
+Choropleth scope decision (see PROJECT_PLAN.md's Phase 5 section for the
 full reasoning): EAVS jurisdictions are counties in most states, but 7
 states report at the town/municipality level instead (confirmed via the
 ratio of jurisdiction-count to 5-digit-FIPS-prefix-count: Wisconsin is
@@ -108,7 +108,7 @@ def build_county_choropleth(u: pd.DataFrame) -> dict:
             "either don't encode a real county (Wisconsin) or would "
             "need an external, unvalidated town-to-county crosswalk to "
             "aggregate correctly (New England) — see PROJECT_PLAN.md's "
-            "Week 5 section. Shown gray on the map, not silently "
+            "Phase 5 section. Shown gray on the map, not silently "
             "omitted."
         ),
     }

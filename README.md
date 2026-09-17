@@ -1,7 +1,7 @@
 # Administrative Burden at the Ballot Box
 
 **Status: Weeks 1–5 done.** TWFE, Sun-Abraham, and Callaway-Sant'Anna all
-agree on a clean null effect (see `PROJECT_PLAN.md`'s Week 4 section for
+agree on a clean null effect (see `PROJECT_PLAN.md`'s Phase 4 section for
 the two diagnosed-but-unresolved caveats worth reading before citing any
 number). The project's deliverable — an interactive web dashboard, not a
 static writeup — is built at `docs/index.html`:
@@ -35,7 +35,7 @@ Commission, 2016–2024 (5 waves). Public, no authentication required. See
 python3 -m pip install -r requirements.txt
 ```
 
-R (estimation — Week 4): `fixest`, `did`, `didimputation`, `fwildclusterboot`,
+R (estimation — Phase 4): `fixest`, `did`, `didimputation`, `fwildclusterboot`,
 `data.table`, `ggplot2`, `modelsummary`, `broom` are already installed and
 verified to load on this machine. If setting up fresh elsewhere:
 
@@ -75,7 +75,7 @@ first if the anaconda interpreter isn't the first `python3` on `PATH`).
 │   ├── eavs_variable_crosswalk.md   # wave-by-wave variable mapping, verified
 │   ├── crosswalk.yaml               # machine-readable version of the above
 │   ├── variable_memo.md             # one-page pre-analysis memo
-│   └── policy_coding_sheet.md       # treatment coding (Week 3)
+│   └── policy_coding_sheet.md       # treatment coding (Phase 3)
 ├── src/
 │   ├── 01_download.py
 │   ├── 02_build_crosswalk.py
@@ -85,7 +85,7 @@ first if the anaconda interpreter isn't the first `python3` on `PATH`).
 │   ├── 06_estimate.R           # TWFE, Sun-Abraham, Callaway-Sant'Anna + bootstrap/heterogeneity/robustness
 │   └── 07_figures.py           # panel-derived dashboard data (docs/data/)
 ├── output/{figures,tables}/
-├── docs/               # Week 5 dashboard — GitHub Pages serves this folder
+├── docs/               # Phase 5 dashboard — GitHub Pages serves this folder
 │   ├── index.html
 │   ├── app.js
 │   ├── style.css

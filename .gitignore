@@ -18,9 +18,14 @@ __pycache__/
 .claude/
 
 # Process/planning documentation, untracked at the user's request —
-# kept locally, not published to GitHub.
-PROJECT_PLAN.md
-HANDOFF.md
-Project_Handoff_Ballot_Rejection_Analysis.md
-VALIDATION_REPORT.md
+# kept locally, not published to GitHub. Patterns (not just exact
+# names) so future planning docs are excluded automatically.
+*PLAN*.md
+*HANDOFF*.md
+*VALIDATION*.md
 .env
+
+# Generated analysis outputs and the test suite — not src, not data,
+# untracked at the user's request; kept locally, not published.
+output/
+tests/

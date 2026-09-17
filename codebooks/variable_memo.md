@@ -1,6 +1,6 @@
 # Variable Memo — One Page Before Touching Analysis Code
 
-Per the project plan, this memo gates Week 2. It lists every variable
+Per the project plan, this memo gates Phase 2. It lists every variable
 needed per wave, where definitions diverge, and every trap confirmed
 against the real files in `data/raw/`.
 
@@ -69,7 +69,7 @@ in the writeup as a scope limitation, do not attempt to backfill.
   97.5% (2020) / 95.2% (2022) / 94.2% (2024). ~30,600 of ~32,225
   jurisdiction-year rows usable across all five waves combined.
 
-## Controls needed from ACS (Week 2, `04_merge_controls.py`)
+## Controls needed from ACS (Phase 2, `04_merge_controls.py`)
 
 Median household income, educational attainment (% bachelor's+), median
 age, race/ethnicity composition, rural/urban classification — all at
@@ -89,7 +89,7 @@ the jurisdictions the rejection-rate analysis is about. `05_build_panel.py`
 must produce a missingness-by-jurisdiction-size report; the writeup treats
 this as a documented limitation, not a silent exclusion.
 
-## Open item before Week 3
+## Open item before Phase 3
 
 Census API key not yet obtained — blocks `03_merge_controls.py`. Everything
-else in Week 1–2 is unblocked.
+else in Phase 1–2 is unblocked.

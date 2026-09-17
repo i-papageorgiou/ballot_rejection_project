@@ -1,6 +1,6 @@
 """
 08_merge_controls.py — County-level ACS demographic controls, deferred
-since Week 2 (no Census API key existed until now).
+since Phase 2 (no Census API key existed until now).
 
 Produces data/processed/acs_controls.csv (county x wave-year), completely
 independent of panel.parquet and the numbered 01->07 pipeline — this is a
@@ -11,7 +11,7 @@ urban/rural heterogeneity split, or as att_gt's xformla covariates) is
 deliberately deferred to a follow-up round; this script only builds and
 verifies the controls file itself.
 
-Scope, same reasoning as the Week 5 choropleth's county-coverage decision
+Scope, same reasoning as the Phase 5 choropleth's county-coverage decision
 (see PROJECT_PLAN.md): merges at the county level (fips[:5]), which only
 resolves to a real county for the 44 states + DC that report EAVS at true
 county granularity. The 7 town/municipality-reporting states (WI + New
@@ -58,7 +58,7 @@ VINTAGES = (2014, 2016, 2018, 2020, 2022, 2024)
 NCHS_URL = "https://www.cdc.gov/nchs/data/data-analysis/NCHSurb-rural-codes.csv"
 NCHS_PATH = RAW / "nchs_urban_rural.csv"
 
-# Same 7 states already excluded from the Week 5 choropleth (see
+# Same 7 states already excluded from the Phase 5 choropleth (see
 # src/07_figures.py) for the identical reason: EAVS reports them at the
 # town/municipality level, so their jurisdiction FIPS doesn't resolve to
 # a real county. Duplicated rather than shared via a new module for a
