@@ -27,8 +27,9 @@ __pycache__/
 
 # Generated analysis outputs and the test suite — not src, not data,
 # untracked at the user's request; kept locally, not published.
-# NOTE: docs/ is also generated (by src/06_estimate.R and
-# src/07_figures.py) but stays tracked on purpose — it's the published
-# artifact: GitHub Pages serves docs/ as the project's live dashboard.
+# NOTE: docs/data/*.json is also generated (by src/06_estimate.R and
+# src/07_figures.py) but stays tracked on purpose — it's fetched at
+# runtime by the published dashboard (index.html, style.css, app.js at
+# the repo root; GitHub Pages serves the repo root, not docs/).
 output/
 tests/

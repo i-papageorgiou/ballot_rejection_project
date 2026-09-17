@@ -42,7 +42,7 @@ function text(x, y, str, attrs) {
 
 // --- Headline stat grid -----------------------------------------------------
 async function renderStatGrid() {
-  const data = await fetchJSON("data/model_comparison.json");
+  const data = await fetchJSON("docs/data/model_comparison.json");
   const models = data.models;
   const cs = models.find((m) => m.model === "Callaway-Sant'Anna") || models[models.length - 1];
   const twfe = models.find((m) => m.model === "TWFE") || models[0];
@@ -258,7 +258,7 @@ function renderStateDist(year) {
 }
 
 async function renderStateDistSection() {
-  STATE_DIST = await fetchJSON("data/state_distribution.json");
+  STATE_DIST = await fetchJSON("docs/data/state_distribution.json");
   const picker = document.getElementById("wave-picker");
   const latest = STATE_DIST.waves[STATE_DIST.waves.length - 1];
   STATE_DIST.waves.forEach((w) => {
@@ -278,7 +278,7 @@ async function renderStateDistSection() {
 
 // --- Figure 4: county choropleth ----------------------------------------------
 async function renderChoropleth() {
-  const data = await fetchJSON("data/county_choropleth.json");
+  const data = await fetchJSON("docs/data/county_choropleth.json");
   document.getElementById("choropleth-note").textContent =
     `Wave ${data.wave}. Gray = ${data.excluded_states.join(", ")} (${data.excluded_reason})`;
 
@@ -320,7 +320,7 @@ async function renderChoropleth() {
 
 // --- Heterogeneity table -------------------------------------------------------
 async function renderHeterogeneity() {
-  const data = await fetchJSON("data/heterogeneity.json");
+  const data = await fetchJSON("docs/data/heterogeneity.json");
   const label = (v) => ({
     "interaction: treated x log_ballots": "Interaction (full sample)",
     "subsample: large": "Tercile: large",
@@ -352,7 +352,7 @@ async function renderHeterogeneity() {
 
 // --- Robustness table -----------------------------------------------------------
 async function renderRobustness() {
-  const data = await fetchJSON("data/robustness.json");
+  const data = await fetchJSON("docs/data/robustness.json");
   const label = (v) => ({
     drop_2020: "Drop 2020",
     drop_WI_MI: "Drop WI, MI",
@@ -380,7 +380,7 @@ async function renderRobustness() {
     renderCoefficientsChart(modelData.models);
     renderCoefficientsTable(modelData);
 
-    const esData = await fetchJSON("data/event_study.json");
+    const esData = await fetchJSON("docs/data/event_study.json");
     renderEventStudy(esData);
 
     await Promise.all([

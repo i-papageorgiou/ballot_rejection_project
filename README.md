@@ -39,10 +39,11 @@ running or extending the underlying analysis code.)
 agree on a clean null effect (see `PROJECT_PLAN.md`'s Phase 4 section for
 the two diagnosed-but-unresolved caveats worth reading before citing any
 number). The project's deliverable — an interactive web dashboard, not a
-static writeup — is built at `docs/index.html`:
+static writeup — is built at `index.html` (repo root; it fetches its data
+from `docs/data/*.json`):
 [**live dashboard**](https://i-papageorgiou.github.io/ballot_rejection_project/)
 once GitHub Pages is enabled (Settings → Pages → Deploy from branch →
-`main` /docs — not yet done as of this commit). **Picking this project
+`main` /(root) — not yet done as of this commit). **Picking this project
 up? Start with `HANDOFF.md`** — it has the reading order, verified
 facts, and next steps. See `PROJECT_PLAN.md` for
 the full week-by-week plan and `Project_Handoff_Ballot_Rejection_Analysis.md`
@@ -120,11 +121,11 @@ first if the anaconda interpreter isn't the first `python3` on `PATH`).
 │   ├── 06_estimate.R           # TWFE, Sun-Abraham, Callaway-Sant'Anna + bootstrap/heterogeneity/robustness
 │   └── 07_figures.py           # panel-derived dashboard data (docs/data/)
 ├── output/{figures,tables}/
-├── docs/               # Phase 5 dashboard — GitHub Pages serves this folder
-│   ├── index.html
-│   ├── app.js
-│   ├── style.css
-│   └── data/           # JSON written by 06_estimate.R + 07_figures.py
+├── docs/
+│   └── data/           # JSON written by 06_estimate.R + 07_figures.py, fetched by index.html
 ├── tests/            # pytest suite validating crosswalk.yaml + data/interim/, independent of 03_clean_eavs.py's own gate
-└── writeup/
+├── writeup/
+├── index.html          # Phase 5 dashboard — GitHub Pages serves the repo root
+├── app.js
+└── style.css
 ```
