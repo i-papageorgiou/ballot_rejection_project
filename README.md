@@ -38,17 +38,7 @@ running or extending the underlying analysis code.)
 **Status: Phases 1–5 done.** TWFE, Sun-Abraham, and Callaway-Sant'Anna all
 agree on a clean null effect (see `PROJECT_PLAN.md`'s Phase 4 section for
 the two diagnosed-but-unresolved caveats worth reading before citing any
-number). The project's deliverable — an interactive web dashboard, not a
-static writeup — is built at `index.html` (repo root; self-contained,
-with its data baked directly into the page — see `chart.js` for the
-render logic and the note in "Repository structure" below):
-[**live dashboard**](https://i-papageorgiou.github.io/ballot_rejection_project/)
-once GitHub Pages is enabled (Settings → Pages → Deploy from branch →
-`main` /(root) — not yet done as of this commit). **Picking this project
-up? Start with `HANDOFF.md`** — it has the reading order, verified
-facts, and next steps. See `PROJECT_PLAN.md` for
-the full phase-by-phase plan and `Project_Handoff_Ballot_Rejection_Analysis.md`
-for the original project brief.
+number).
 
 ## Research question
 
