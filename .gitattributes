@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Exclude the self-contained dashboard (bulk is baked-in JSON data, not
+# authored HTML) from GitHub's language statistics.
+index.html linguist-generated=true
